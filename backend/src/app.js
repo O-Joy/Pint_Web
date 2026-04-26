@@ -29,12 +29,19 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rota de teste
 app.get('/', (req, res) => {
-  res.json({ message: 'API BadgeBoost a funcionar!' });
+  res.json({ message: 'API a funcionar!' });
 });
 
 //Rotas da API
 
 // =======   ADICIONAR AQUI AS ROTAS Á MEDIDA QUE CRIAMOS   ================
+
+const authRoutes = require('./routes/auth.routes');
+const badgesRoutes = require('./routes/badges.routes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api', badgesRoutes);
+
 
 //Arrancar o servidor
 
