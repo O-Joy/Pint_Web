@@ -1,11 +1,10 @@
-// O dotenv lê o ficheiro .env que criado na pasta backend/ e torna as variáveis disponíveis em qualquer sítio do código através de process.env.NOME_VARIAVEL.
+// O dotenv lê o ficheiro .env que foi criado na pasta backend/ e torna as variáveis disponíveis em qualquer sítio do código através de process.env.NOME_VARIAVEL.
 // TEM DE SER A PRIMEIRA LINHA — antes de qualquer outro require, porque os outros ficheiros podem precisar das variáveis ao serem carregados.
 require('dotenv').config();
 
 const express = require('express');  // framework web — gere rotas e pedidos HTTP
 const cors = require('cors');        // permite que o Flutter e o React façam pedidos a esta API
 const path = require('path');        // utilitário do Node para trabalhar com caminhos de ficheiros
-const { sequelize } = require('./model'); //import do objeto sequalize
 
 const app = express(); // cria a aplicação Express (servidor)
 
@@ -39,15 +38,30 @@ app.get('/', (req, res) => {
 
 //Arrancar o servidor
 
-const PORT = process.env.PORT || 3001; // Lê a porta do .env (Postges) — se não existir usa 3001 por defeito
+const { Sequelize } = require('sequelize');
 
-sequelize.authenticate() //ligação
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    logging: false,
+  }
+);
+
+const PORT = process.env.PORT || 3001;  // // Lê a porta do .env
+//  — se não existir usa 3001 por defeito
+
+sequelize.authenticate()
   .then(() => {
-    console.log('✅ Ligação ao PostgreSQL estabelecida');
+    console.log('Ligação ao PostgreSQL estabelecida');
     app.listen(PORT, () => {
-      console.log(`✅ Servidor na porta ${PORT}`);
+      console.log(`Servidor na porta ${PORT}`);
     });
   })
-  .catch(err => { //erro
+  .catch(err => {
     console.error('Erro ao ligar ao PostgreSQL:', err.message);
   });
