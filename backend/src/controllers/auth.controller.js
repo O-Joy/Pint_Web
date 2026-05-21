@@ -46,7 +46,6 @@ exports.login = async (req, res) => {
     const consultor = await Consultor.findOne({ where: { idUtilizador: utilizador.idUtilizador } });
     if (consultor) {
       perfil = 'consultor';
-s
       let nomeArea = null;
       let nomeLearningPath = null;
 
