@@ -38,10 +38,11 @@ app.get('/', (req, res) => {
 
 const authRoutes = require('./routes/auth.routes');
 const badgesRoutes = require('./routes/badges.routes');
+const perfilRoutes = require('./routes/perfil.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', badgesRoutes);
-
+app.use('/api', perfilRoutes);
 
 //Arrancar o servidor
 
