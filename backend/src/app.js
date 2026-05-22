@@ -39,10 +39,12 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/auth.routes');
 const badgesRoutes = require('./routes/badges.routes');
 const perfilRoutes = require('./routes/perfil.routes');
+const notificacoesRoutes = require('./routes/notificacoes.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', badgesRoutes);
 app.use('/api', perfilRoutes);
+app.use('/api', notificacoesRoutes);
 
 //Arrancar o servidor
 
@@ -66,7 +68,7 @@ const PORT = process.env.PORT || 3001;  // // Lê a porta do .env
 sequelize.authenticate()
   .then(() => {
     console.log('Ligação ao PostgreSQL estabelecida');
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Servidor na porta ${PORT}`);
     });
   })
