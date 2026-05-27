@@ -10,5 +10,8 @@ router.get('/notificacoes', notificacoesController.getNotificacoes);
  
 // DELETE /api/notificacoes/:id  — elimina uma notificação do utilizador
 router.delete('/notificacoes/:id', notificacoesController.eliminarNotificacao);
- 
+
+// PUT ->marcar com lida
+router.put('/notificacoes/:id/lida', notificacoesController.marcarLida);
+
 module.exports = router;

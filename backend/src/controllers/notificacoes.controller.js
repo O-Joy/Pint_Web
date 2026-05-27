@@ -43,6 +43,28 @@ exports.getNotificacoes = async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar notificações' });
   }
 };
+
+// PUT - > lida
+exports.marcarLida = async (req, res) => {
+  const idUtilizador = req.user.idUtilizador;
+  const idNotificacao = parseInt(req.params.id);
+ 
+  try {
+    const [updated] = await UtilizadorNotificacao.update(
+      { lida: true },
+      { where: { idUtilizador, idNotificacao } }
+    );
+ 
+    if (updated === 0) {
+      return res.status(404).json({ error: 'Notificação não encontrada.' });
+    }
+ 
+    res.json({ message: 'Notificação marcada como lida.' });
+  } catch (err) {
+    console.error('Erro ao marcar notificação como lida:', err);
+    res.status(500).json({ error: 'Erro ao marcar como lida.' });
+  }
+};
  
 // DELETE /api/notificacoes/:id
 // Remove a ligação entre o utilizador e a notificação (não apaga a notificação global)
