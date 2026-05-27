@@ -24,13 +24,19 @@ exports.getNotificacoes = async (req, res) => {
       order: [['data', 'DESC']],
     });
  
+    // lida vem de utilizador_notificacao (por utilizador), não da notificacao (global)
+    const lidaMap = {};
+    ligacoes.forEach((l) => {
+      lidaMap[l.idNotificacao] = l.lida;
+    });
+
     // Devolve os campos esperados pelo Flutter (fromJson do modelo Notificacao)
     const resultado = notificacoes.map((n) => ({
       id: n.idNotificacao,
       tipoNotificacao: n.tipoNotificacao,
       descricao: n.descricao,
       data: n.data,
-      lida: false, // a lógica de lida é gerida localmente no SQLite do Flutter
+      lida: lidaMap[n.idNotificacao] ?? false,
       numCandidatura: n.numCandidatura,
       idObjetivo: n.idObjetivo,
       idBadgeUtilizador: n.idBadgeUtilizador,
