@@ -23,6 +23,11 @@ const UtilizadorNotificacao = sequelize.define('UtilizadorNotificacao', {
     primaryKey: true,
     field: 'id_notificacao',
   },
+  lida: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'lida',
+  },
 }, {
   tableName: 'utilizador_notificacao',
   timestamps: false,
