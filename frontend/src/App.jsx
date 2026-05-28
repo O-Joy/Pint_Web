@@ -1,120 +1,76 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+// App.jsx — Ponto de entrada da aplicação React
+// Define todas as rotas da aplicação usando React Router v6
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css'
 
+import ProtectedRoute from './components/ProtectedRoute'
+
+// Páginas de autenticação (qualquer utilizador)
+import Login from './views/auth/Login'
+import RecuperarPassword from './views/auth/RecuperarPassword'
+import VerificarCodigo from './views/auth/VerificarCodigo'
+import RedefinirPassword from './views/auth/RedefinirPassword'
+
+//Admin
+import DashboardAdmin from './views/admin/Dashboard'
+
+//SLL
+import DashboardServiceLine from './views/serviceline/Dashboard'
+
+//Talent Manager
+import DashboardTalent from './views/talentmanager/Dashboard'
+
+//consultor
+import EscolhaArea from './views/auth/EscolhaArea'
+import DashboardConsultor from './views/consultor/Dashboard'
+
+
+
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <BrowserRouter>
+      <Routes>
+        {/* Rota raiz — redireciona para login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <div className="ticks"></div>
+        {/* Rotas públicas — não precisam de autenticação */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/recuperar-password" element={<RecuperarPassword />} />
+        <Route path="/verificar-codigo" element={<VerificarCodigo />} />
+        <Route path="/redefinir-password" element={<RedefinirPassword />} />
+        <Route path="/escolha-area" element={<EscolhaArea />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Rotas do Consultor — só perfil 'consultor' tem acesso */}
+        <Route path="/consultor/dashboard" element={
+          <ProtectedRoute perfisPermitidos={['consultor']}>
+            <DashboardConsultor />
+          </ProtectedRoute>
+        } />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Rotas do Talent Manager — só perfil 'talent_manager' tem acesso */}
+        <Route path="/talent/dashboard" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <DashboardTalent />
+          </ProtectedRoute>
+        } />
+
+        {/* Rotas do Service Line Leader — só perfil 'sl_leader' tem acesso */}
+        <Route path="/serviceline/dashboard" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <DashboardServiceLine />
+          </ProtectedRoute>
+        } />
+
+        {/* Rotas do Administrador — só perfil 'administrador' tem acesso */}
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <DashboardAdmin />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
