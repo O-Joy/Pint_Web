@@ -46,6 +46,10 @@ exports.login = async (req, res) => {
     const consultor = await Consultor.findOne({ where: { idUtilizador: utilizador.idUtilizador } });
     if (consultor) {
       perfil = 'consultor';
+
+      // Verifica se é o primeiro acesso ANTES de atualizar — se ultimoAcesso for null, nunca entrou
+      const primeiroAcesso = utilizador.ultimoLogin === null;
+
       let nomeArea = null;
       let nomeLearningPath = null;
 
@@ -64,6 +68,7 @@ exports.login = async (req, res) => {
         idLearningPath: consultor.idLearningPath,
         nomeLearningPath,
         configuracaoCompleta: !!(consultor.idArea && consultor.idLearningPath),
+        primeiroAcesso,
       };
     }
 
@@ -100,7 +105,7 @@ exports.login = async (req, res) => {
       return res.status(403).json({ error: 'Utilizador sem perfil definido.' });
     }
 
-    // Actualiza o último login na app
+    // Atualiza o ultimo login para TODOS os perfis
     await Utilizador.update(
       { ultimoLogin: new Date() },
       { where: { idUtilizador: utilizador.idUtilizador } }
@@ -154,45 +159,71 @@ exports.login = async (req, res) => {
   }
 };
 
-//RECUPERAR PASSWORD
-// EComo não há email real configurado, o código é devolvido na resposta JSON no campo 'codigo'.
-// Sugiro que o cliente (Flutter ou React) use o código para este preencher automaticamente o campo de código no ecrã
-// De futuro somos capazes de usar nodemailler...não tenho a certeza
+// RECUPERAR PASSWORD
+// Gera um código de 5 dígitos, guarda-o em memória com validade de 15 minutos
+// e envia-o por email para o utilizador
+// NOTA: como os emails na BD são fictícios, o email é enviado para o EMAIL_USER
+//       configurado no .env — ou seja, para o teu próprio email de aluno
 
 exports.recuperarPassword = async (req, res) => {
-  const { email } = req.body;
+  const { email } = req.body
 
   if (!email) {
-    return res.status(400).json({ error: 'Email é obrigatório' });
+    return res.status(400).json({ error: 'Email é obrigatório' })
   }
 
   try {
-    const utilizador = await Utilizador.findOne({ where: { email, ativo: 1 } });
+    const utilizador = await Utilizador.findOne({ where: { email, ativo: 1 } })
 
-    // Responde sempre com sucesso — não revela se o email existe
+    // Responde sempre com sucesso para não revelar se o email existe na BD
+    // (medida de segurança — evita que alguém descubra quais emails estão registados)
     if (!utilizador) {
-      return res.json({ message: 'Receberás um código em breve.' });
+      return res.json({ message: 'Se o email existir, receberás um código em breve.' })
     }
 
-    // Gera um código de 5 dígitos
-    const codigo = Math.floor(10000 + Math.random() * 90000).toString();
+    // Gera um código aleatório de 5 dígitos
+    const codigo = Math.floor(10000 + Math.random() * 90000).toString()
 
-    // Guarda o código com validade de 15 minutos
+    // Guarda o código em memória com o email como chave e validade de 15 minutos
+    // Em produção seria melhor guardar na BD, mas para este projeto é suficiente
     codigosRecuperacao.set(email, {
       codigo,
       expira: new Date(Date.now() + 15 * 60 * 1000),
-    });
+    })
 
-    // DEVOLVE CODIGO DIRETAMENTE PORQUE NAO HA MAIL REAL CONFIGURADO
-    res.json({
-      message: 'Código gerado com sucesso.',
-      codigo, // REMOVER NO FUTURO CASO HAJA MUDANÇAS
-    });
+    // Envia o código por email
+    // Como os emails são fictícios, enviamos para o EMAIL_USER (o teu email real)
+    // Em produção enviaria para o email do utilizador
+    const transporter = require('../config/mailer')
+    await transporter.sendMail({
+      from: `"BadgeBoost Softinsa" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER, // envia para ti em vez do email fictício
+      subject: 'Código de recuperação de password — BadgeBoost',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+          <h2 style="color: #39639C;">BadgeBoost</h2>
+          <p>Olá, <strong>${utilizador.nomeUtilizador}</strong>.</p>
+          <p>Recebemos um pedido de recuperação de password para a conta <strong>${email}</strong>.</p>
+          <p>O teu código de verificação é:</p>
+          <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #39639C;">
+              ${codigo}
+            </span>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">Este código expira em 15 minutos.</p>
+          <p style="color: #6b7280; font-size: 14px;">Se não pediste a recuperação de password, ignora este email.</p>
+        </div>
+      `,
+    })
+
+    // Responde com sucesso — não inclui o código na resposta por razões de segurança
+    res.json({ message: 'Código enviado com sucesso.' })
+
   } catch (err) {
-    console.error('Erro ao recuperar password:', err);
-    res.status(500).json({ error: 'Erro ao gerar código' });
+    console.error('Erro ao recuperar password:', err)
+    res.status(500).json({ error: 'Erro ao enviar código. Tenta novamente.' })
   }
-};
+}
 
 //VERIFICAR CÓDIGO
 exports.verificarCodigo = async (req, res) => {
