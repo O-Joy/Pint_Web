@@ -44,4 +44,7 @@ const Pontuacao = sequelize.define('Pontuacao', {
   timestamps: false,
 });
 
+const Utilizador = require('./utilizador');
+Pontuacao.belongsTo(Utilizador, { foreignKey: 'id_utilizador' });
+
 module.exports = Pontuacao;
