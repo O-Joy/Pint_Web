@@ -15,7 +15,7 @@
 //   Consultor corrige → ressubmete (→3)
 //   SLL valida → aprova (→5) ou pede retificação (→4)
 //   Consultor corrige → ressubmete (→3)
-
+const { Op } = require('sequelize');
 const Candidatura       = require('../model/candidatura');
 const HistoricoCandidatura = require('../model/historicoCandidatura');
 const EstadosCandidatura   = require('../model/estadosCandidatura');
@@ -62,7 +62,10 @@ exports.getCandidaturas = async (req, res) => {
 
   try {
     const candidaturas = await Candidatura.findAll({
-      where: { idCandidato },
+      where: { 
+        idCandidato,
+        idEstadoAtual: {[Op.ne]: 0}, // Exclui rascunhos (estado 0)
+      },
       order: [['dataCriacao', 'DESC']],
     });
 
@@ -204,7 +207,7 @@ exports.criarCandidatura = async (req, res) => {
     const candidatura = await Candidatura.create({
       idBadgeRegular,
       idCandidato,
-      idEstadoAtual: 1,  // 1 = Em Validação TM (pré-submissão, ainda sem evidências)
+      idEstadoAtual: 0,  // 0 = Rascunho (pré-submissão, ainda sem evidências)
       dataCriacao: new Date(),
     });
 
@@ -341,5 +344,98 @@ exports.submeterCandidatura = async (req, res) => {
   } catch (err) {
     console.error('[candidaturas] submeterCandidatura:', err.message);
     return res.status(500).json({ error: 'Erro interno ao submeter candidatura.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// DELETE /api/candidaturas/:numCandidatura
+// Apaga uma candidatura — só permite se estiver em estado 0 (rascunho)
+// ─────────────────────────────────────────────────────────────
+exports.cancelarRascunho = async (req, res) => {
+  const idCandidato = req.user.idUtilizador;
+  const numCandidatura = parseInt(req.params.numCandidatura);
+
+  try {
+    const candidatura = await Candidatura.findOne({
+      where: { numCandidatura, idCandidato },
+    });
+
+    if (!candidatura) {
+      return res.status(404).json({ error: 'Candidatura não encontrada.' });
+    }
+
+    // Segurança: só permite apagar se for rascunho (estado 0)
+    if (candidatura.idEstadoAtual !== 0) {
+      return res.status(403).json({ 
+        error: 'Só é possível cancelar candidaturas em rascunho.' 
+      });
+    }
+
+    // 1. Primeiro apaga os ficheiros físicos do disco
+    const evidencias = await Evidencia.findAll({ where: { numCandidatura } });
+    for (const ev of evidencias) {
+      if (ev.pathFicheiro && fs.existsSync(ev.pathFicheiro)) {
+        fs.unlinkSync(ev.pathFicheiro);
+      }
+    }
+
+    // 2. Depois apaga os registos das evidências da BD
+    await Evidencia.destroy({ where: { numCandidatura } });
+
+    // 3. Por fim apaga a candidatura
+    await candidatura.destroy();
+
+    return res.json({ message: 'Rascunho cancelado com sucesso.' });
+  } catch (err) {
+    console.error('[candidaturas] cancelarRascunho:', err.message);
+    return res.status(500).json({ error: 'Erro ao cancelar rascunho.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/candidaturas/rascunhos
+// Lista todos os rascunhos (estado 0) do consultor autenticado
+// ─────────────────────────────────────────────────────────────
+exports.getRascunhos = async (req, res) => {
+  const idCandidato = req.user.idUtilizador;
+
+  try {
+    const rascunhos = await Candidatura.findAll({
+      where: { idCandidato, idEstadoAtual: 0 },
+      order: [['dataCriacao', 'DESC']],
+    });
+
+    const resultado = await Promise.all(rascunhos.map(async (c) => {
+      // Vai buscar o nome do badge e nível
+      let nomeBadge = 'Desconhecido';
+      let nomeNivel = null;
+      const br = await BadgeRegular.findOne({ where: { idBadgeRegular: c.idBadgeRegular } });
+      if (br) {
+        nomeBadge = br.nomeBadge;
+        if (br.idNivel) {
+          const nivel = await Nivel.findOne({ where: { idNivel: br.idNivel } });
+          if (nivel) nomeNivel = nivel.nomeNivel;
+        }
+      }
+
+      // Conta evidências já carregadas e requisitos totais
+      const numEvidencias = await Evidencia.count({ where: { numCandidatura: c.numCandidatura } });
+      const numRequisitos = await Requisitos.count({ where: { idBadgeRegular: c.idBadgeRegular } });
+
+      return {
+        numCandidatura: c.numCandidatura,
+        idBadgeRegular: c.idBadgeRegular,
+        nomeBadge,
+        nomeNivel,
+        dataCriacao: c.dataCriacao,
+        numEvidencias,
+        numRequisitos,
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[candidaturas] getRascunhos:', err.message);
+    return res.status(500).json({ error: 'Erro interno ao obter rascunhos.' });
   }
 };

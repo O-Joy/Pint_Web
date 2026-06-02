@@ -4,7 +4,7 @@ const Utilizador = require('../model/Utilizador');
 const Consultor = require('../model/Consultor');
 const Area = require('../model/Area');
 const LearningPath = require('../model/LearningPath');
-
+const { sequelize } = require('../model/utilizador');
 const codigosRecuperacao = new Map();
 
 //LOGIN
@@ -197,7 +197,7 @@ exports.recuperarPassword = async (req, res) => {
     const transporter = require('../config/mailer')
     await transporter.sendMail({
       from: `"BadgeBoost Softinsa" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // envia para ti em vez do email fictício
+      to: utilizador.email, // envia para ti em vez do email fictício
       subject: 'Código de recuperação de password — BadgeBoost',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
@@ -317,5 +317,18 @@ exports.configuracaoInicial = async (req, res) => {
   } catch (err) {
     console.error('Erro na configuração inicial:', err);
     res.status(500).json({ error: 'Erro ao guardar configuração' });
+  }
+};
+
+exports.getPoliticaPrivacidade = async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      "SELECT conteudo FROM configuracoes WHERE chave = 'politica_privacidade'"
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Não encontrado' });
+    res.json({ conteudo: rows[0].conteudo });
+  } catch (e) {
+    console.error('Erro ao obter política de privacidade:', e);
+    res.status(500).json({ error: 'Erro interno' });
   }
 };

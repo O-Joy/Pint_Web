@@ -79,6 +79,9 @@ router.use(authMiddleware);
 // (deve ficar antes de /candidaturas/:numCandidatura para não ser interceptada)
 router.get('/candidaturas/estados', candidaturasController.getEstados);
 
+// GET  /api/candidaturas/rascunhos     → lista apenas os rascunhos (estado 0) do consultor
+router.get('/candidaturas/rascunhos', candidaturasController.getRascunhos);
+
 // GET  /api/candidaturas               → todas as candidaturas do consultor autenticado
 router.get('/candidaturas', candidaturasController.getCandidaturas);
 
@@ -87,6 +90,9 @@ router.post('/candidaturas', candidaturasController.criarCandidatura);
 
 // GET  /api/candidaturas/:id/detalhes  → histórico + evidências de uma candidatura
 router.get('/candidaturas/:numCandidatura/detalhes', candidaturasController.getDetalhesCandidatura);
+
+// DELETE /api/candidaturas/:id         → cancela (apaga) um rascunho de candidatura
+router.delete('/candidaturas/:numCandidatura', candidaturasController.cancelarRascunho);
 
 // POST /api/candidaturas/:id/evidencias → upload de ficheiro de evidência
 // O Flutter envia multipart/form-data com os campos:
