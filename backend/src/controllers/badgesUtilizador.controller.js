@@ -69,6 +69,8 @@ exports.getTodosBadges = async (req, res) => {
         return {
           id: bu.idBadgeUtilizador,
           idUtilizador: bu.idUtilizador,
+          idBadgeRegular: bu.idBadgeRegular,
+          idBadgeEspecial: bu.idBadgeEspecial,
           nomeBadge: nome,
           nomeNivel,
           idNivel,
