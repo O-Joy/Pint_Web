@@ -27,10 +27,7 @@ export default function AuthLayout({ children }) {
         <div className="auth-form-container">
 
           {/* Logo em texto — não depende de ficheiro de imagem externo */}
-          <div className="auth-logo-text">
-            <span className="logo-soft">SOFT</span>
-            <span className="logo-insa">INSA</span>
-          </div>
+      <img src="/logo-softinsa.svg" alt="Softinsa" className="auth-logo" />
 
           {/* Aqui entra o formulário específico de cada ecrã */}
           {children}

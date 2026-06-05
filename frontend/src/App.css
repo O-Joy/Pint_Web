@@ -227,3 +227,214 @@ body {
     width: 100%;
   }
 }
+/*=====================================================
+LOGO
+=======================================================*/
+
+.sidebar-logo-img {
+  height: 32px;
+  width: auto;
+}
+
+/*============================================================
+DASHBOARD 
+============================================================*/
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+ 
+.dashboard-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid var(--cor-borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  z-index: 200;
+}
+ 
+.dashboard-body {
+  display: flex;
+  margin-top: 60px;
+  min-height: calc(100vh - 60px);
+}
+ 
+.sidebar {
+  width: 200px;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  bottom: 0;
+  background: white;
+  border-right: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 100;
+  overflow-y: auto;
+}
+ 
+.sidebar-logo {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--cor-borda);
+  flex-shrink: 0;
+}
+ 
+.dashboard-main {
+  margin-left: 200px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+ 
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+ 
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--cor-texto-secundario);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+ 
+.sidebar-nav-item:hover {
+  background: var(--cor-fundo);
+  color: var(--cor-primaria);
+}
+ 
+.sidebar-nav-item.active {
+  background: var(--cor-primaria);
+  color: white;
+}
+ 
+.sidebar-nav-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+ 
+.sidebar-footer {
+  padding: 1rem 0.75rem;
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+ 
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-secundario);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+ 
+.sidebar-logout:hover { color: var(--cor-erro); }
+ 
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+ 
+.sidebar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+ 
+.sidebar-user-info { display: flex; flex-direction: column; }
+ 
+.sidebar-user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+ 
+.sidebar-user-role {
+  font-size: 0.7rem;
+  color: var(--cor-texto-secundario);
+}
+ 
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  width: 300px;
+  color: var(--cor-texto-secundario);
+}
+ 
+.topbar-search-input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 0.875rem;
+  color: var(--cor-texto);
+  width: 100%;
+}
+ 
+.topbar-search-input::placeholder { color: var(--cor-texto-secundario); }
+ 
+.topbar-notif-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cor-texto-secundario);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+ 
+.topbar-notif-btn:hover {
+  background: var(--cor-fundo);
+  color: var(--cor-primaria);
+}
+ 
+.dashboard-content {
+  padding: 1.5rem;
+  flex: 1;
+}
