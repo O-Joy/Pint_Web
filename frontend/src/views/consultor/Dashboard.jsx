@@ -11,19 +11,28 @@ const NAV_ITEMS = [
 
 export default function DashboardConsultor() {
   return (
-    <div className="dashboard-layout">
-      {/* Topbar fixa no topo — ocupa toda a largura */}
-      <div className="dashboard-top">
+    <div className="pg-layout">
+      {/* Topbar — linha completa no topo */}
+      <div className="pg-top">
         <Topbar />
       </div>
 
-      {/* Corpo — sidebar + conteúdo */}
-      <div className="dashboard-body">
-        <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-        <div className="dashboard-main">
-          <main className="dashboard-content">
-            {/* Conteúdo aqui */}
-          </main>
+      {/* Corpo — row do Bootstrap */}
+      <div className="container-fluid pg-body">
+        <div className="row h-100">
+
+          {/* Sidebar — col automática, esconde em xs/sm */}
+          <div className="col-auto d-none d-md-flex p-0">
+            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
+          </div>
+
+          {/* Conteúdo — ocupa o resto */}
+          <div className="col">
+            <main className="pg-content">
+              {/* Conteúdo aqui */}
+            </main>
+          </div>
+
         </div>
       </div>
     </div>

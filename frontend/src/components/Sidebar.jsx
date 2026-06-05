@@ -8,6 +8,7 @@ import { FaMedal } from 'react-icons/fa6'
 import { FaClipboardList } from "react-icons/fa6"
 import { IoGrid } from "react-icons/io5"
 import { LuTarget } from "react-icons/lu"
+import { RiLogoutBoxRLine } from "react-icons/ri";
 
 export const icons = {
   dashboard: <IoGrid />,
@@ -34,11 +35,7 @@ export const icons = {
       <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
     </svg>
   ),
-  logout: (
-    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-    </svg>
-  ),
+  logout: <RiLogoutBoxRLine />,
 }
 
 
@@ -87,13 +84,13 @@ export default function Sidebar({ navItems, perfil }) {
           <span>Terminar Sessão</span>
         </button>
 
-        <div className="sidebar-user">
-          <div className="sidebar-avatar">{inicial}</div>
-          <div className="sidebar-user-info">
+        <NavLink to="/perfil" className="sidebar-user">
+        <div className="sidebar-avatar">{inicial}</div>
+        <div className="sidebar-user-info">
             <span className="sidebar-user-name">{utilizador?.nome || 'Utilizador'}</span>
             <span className="sidebar-user-role">{perfil || 'Utilizador'}</span>
-          </div>
         </div>
+        </NavLink>
 
       </div>
 

@@ -16,23 +16,16 @@ export default function RecuperarPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    if (!email) {
-      setErro('O email é obrigatório.')
-      return
-    }
+    if (!email) { setErro('O email é obrigatório.'); return }
 
     setIsLoading(true)
     try {
       await recuperarPassword(email)
-
-      // Guarda o email no sessionStorage para usar no ecrã seguinte
-      // O VerificarCodigo vai buscar este valor para enviar ao backend
+      // Guarda o email para usar no ecrã de verificação de código
       sessionStorage.setItem('resetEmail', email)
       navigate('/verificar-codigo')
     } catch (err) {
-      const msg = err.response?.data?.error || 'Erro ao enviar código. Tenta novamente.'
-      setErro(msg)
+      setErro(err.response?.data?.error || 'Erro ao enviar código. Tenta novamente.')
     } finally {
       setIsLoading(false)
     }
@@ -40,35 +33,39 @@ export default function RecuperarPassword() {
 
   return (
     <AuthLayout>
-      <h2 className="auth-title">Redefine a sua palavra-passe</h2>
-      <p className="auth-subtitle">Insira o email da sua conta</p>
+      <h4 className="fw-bold mb-1" style={{ color: 'var(--cor-primaria)' }}>
+        Redefine a sua palavra-passe
+      </h4>
+      <p className="mb-4 small" style={{ color: 'var(--cor-primaria)' }}>
+        Insira o email da sua conta
+      </p>
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="mb-4">
-          <label className="form-label auth-label">Endereço de email*</label>
+          <label className="form-label small fw-medium">Endereço de email*</label>
           <input
             type="email"
-            className={`form-control auth-input ${erro ? 'is-invalid' : ''}`}
+            className={`form-control ${erro ? 'is-invalid' : ''}`}
             placeholder="Digite o seu email"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setErro('') }}
-            required
           />
           {erro && <div className="invalid-feedback">{erro}</div>}
         </div>
 
-        <button
-          type="submit"
-          className="btn auth-btn-primary w-100 mb-3"
-          disabled={isLoading}
-        >
+        <button type="submit" className="btn w-100 mb-3 text-white"
+          style={{ backgroundColor: 'var(--cor-primaria)' }} disabled={isLoading}>
           {isLoading && <span className="spinner-border spinner-border-sm me-2" />}
           Seguinte
         </button>
 
-        <div className="auth-divider"><span>Ou</span></div>
+        <div className="d-flex align-items-center mb-3">
+          <hr className="flex-grow-1" />
+          <span className="mx-2 small text-secondary">Ou</span>
+          <hr className="flex-grow-1" />
+        </div>
 
-        <Link to="/login" className="btn auth-btn-secondary w-100">
+        <Link to="/login" className="btn btn-outline-secondary w-100">
           Voltar ao login
         </Link>
       </form>

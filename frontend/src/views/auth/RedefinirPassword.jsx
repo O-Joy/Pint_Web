@@ -2,6 +2,7 @@
 // O utilizador define a nova password usando o token_reset guardado no ecrã anterior
 // Após sucesso, redireciona para o login com mensagem de confirmação
 
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthLayout from '../../components/AuthLayout'
@@ -20,8 +21,6 @@ export default function RedefinirPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    // Validações locais antes de chamar a API
     if (form.novaPassword.length < 8) {
       setErro('A password deve ter pelo menos 8 caracteres.')
       return
@@ -30,30 +29,17 @@ export default function RedefinirPassword() {
       setErro('As passwords não coincidem.')
       return
     }
-
-    // Recupera o token temporário guardado no ecrã de verificação de código
     const tokenReset = sessionStorage.getItem('tokenReset')
-    if (!tokenReset) {
-      navigate('/recuperar-password')
-      return
-    }
+    if (!tokenReset) { navigate('/recuperar-password'); return }
 
     setIsLoading(true)
     try {
       await redefinirPassword(tokenReset, form.novaPassword)
-
-      // Limpa os dados temporários do fluxo de recuperação
       sessionStorage.removeItem('resetEmail')
       sessionStorage.removeItem('tokenReset')
-
-      // Redireciona para o login com mensagem de sucesso
-      // O Login.jsx lê esta mensagem através do location.state
-      navigate('/login', {
-        state: { mensagem: 'A sua password foi redefinida com sucesso.' },
-      })
+      navigate('/login', { state: { mensagem: 'A sua password foi redefinida com sucesso.' } })
     } catch (err) {
-      const msg = err.response?.data?.error || 'Erro ao redefinir password.'
-      setErro(msg)
+      setErro(err.response?.data?.error || 'Erro ao redefinir password.')
     } finally {
       setIsLoading(false)
     }
@@ -61,46 +47,48 @@ export default function RedefinirPassword() {
 
   return (
     <AuthLayout>
-      <h2 className="auth-title">Redifina a sua palavra-passe</h2>
-      <p className="auth-subtitle">Insira a sua nova palavra-passe</p>
+      <h4 className="fw-bold mb-1" style={{ color: 'var(--cor-primaria)' }}>
+        Redifina a sua palavra-passe
+      </h4>
+      <p className="mb-4 small" style={{ color: 'var(--cor-primaria)' }}>
+        Insira a sua nova palavra-passe
+      </p>
 
       <form onSubmit={handleSubmit} noValidate>
 
+        {/* Nova password */}
         <div className="mb-3">
-          <label className="form-label auth-label">Nova palavra-passe*</label>
+          <label className="form-label small fw-medium">Nova palavra-passe*</label>
           <input
             type="password"
             name="novaPassword"
-            className={`form-control auth-input ${erro ? 'is-invalid' : ''}`}
+            className={`form-control ${erro ? 'is-invalid' : ''}`}
             placeholder="Digite a sua nova palavra-passe"
             value={form.novaPassword}
             onChange={handleChange}
-            required
           />
         </div>
 
+        {/* Confirmação */}
         <div className="mb-4">
-          <label className="form-label auth-label">Repita a palavra-passe*</label>
+          <label className="form-label small fw-medium">Repita a palavra-passe*</label>
           <input
             type="password"
             name="confirmar"
-            className={`form-control auth-input ${erro ? 'is-invalid' : ''}`}
+            className={`form-control ${erro ? 'is-invalid' : ''}`}
             placeholder="Repita a sua nova palavra-passe"
             value={form.confirmar}
             onChange={handleChange}
-            required
           />
           {erro && <div className="text-danger small mt-2">{erro}</div>}
         </div>
 
-        <button
-          type="submit"
-          className="btn auth-btn-primary w-100"
-          disabled={isLoading}
-        >
+        <button type="submit" className="btn w-100 text-white"
+          style={{ backgroundColor: 'var(--cor-primaria)' }} disabled={isLoading}>
           {isLoading && <span className="spinner-border spinner-border-sm me-2" />}
           Redefinir
         </button>
+
       </form>
     </AuthLayout>
   )
