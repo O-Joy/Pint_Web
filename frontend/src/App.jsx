@@ -22,6 +22,12 @@ import DashboardServiceLine from './views/serviceline/Dashboard'
 
 //Talent Manager
 import DashboardTalent from './views/talentmanager/Dashboard'
+//import Validacoes from './views/talentmanager/Validacoes'
+//import Badges from './views/talentmanager/Badges'
+//import Consultores from './views/talentmanager/Consultores'
+//import Relatorios from './views/talentmanager/Relatorios'
+//import Notificacoes from './views/talentmanager/Notificacoes'
+//import Gamification from './views/talentmanager/Gamification'
 
 //consultor
 import EscolhaArea from './views/auth/EscolhaArea'
@@ -56,6 +62,36 @@ function App() {
             <DashboardTalent />
           </ProtectedRoute>
         } />
+        {/*<Route path="/talent/validacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Validacoes />
+          </ProtectedRoute>
+        } />
+        <Route path="/talent/badges" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Badges />
+          </ProtectedRoute>
+        } />
+        <Route path="/talent/consultores" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Consultores />
+          </ProtectedRoute>
+        } />
+        <Route path="/talent/relatorios" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Relatorios />
+          </ProtectedRoute>
+        } />
+        <Route path="/talent/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Notificacoes />
+          </ProtectedRoute>
+        } />
+        <Route path="/talent/gamification" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Gamification />
+          </ProtectedRoute>
+        } />*/}
 
         {/* Rotas do Service Line Leader — só perfil 'sl_leader' tem acesso */}
         <Route path="/serviceline/dashboard" element={
