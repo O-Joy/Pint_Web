@@ -42,7 +42,6 @@ const perfilRoutes = require('./routes/perfil.routes');
 const notificacoesRoutes = require('./routes/notificacoes.routes');
 const gamificationRoutes = require('./routes/gamification.routes');
 const candidaturasRoutes = require('./routes/candidaturas.routes');
-const talentManagerRoutes = require('./routes/talentmanager.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', badgesRoutes);
@@ -50,7 +49,6 @@ app.use('/api', perfilRoutes);
 app.use('/api', notificacoesRoutes);
 app.use('/api', gamificationRoutes);
 app.use('/api', candidaturasRoutes);
-app.use('/api', talentManagerRoutes);
 
 //Arrancar o servidor
 
