@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IoIosNotifications } from "react-icons/io";
+import { FaSearch } from "react-icons/fa";
 
 export default function Topbar() {
   const navigate = useNavigate()
@@ -14,9 +15,7 @@ export default function Topbar() {
 
       {/* Pesquisa — centro */}
       <div className="topbar-search">
-        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
+        <FaSearch />
         <input
           type="text"
           placeholder="Search..."

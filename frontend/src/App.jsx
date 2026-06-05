@@ -4,6 +4,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css'
+import Perfil from './components/Perfil'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -69,6 +70,12 @@ function App() {
             <DashboardAdmin />
           </ProtectedRoute>
         } />
+
+        <Route path="/perfil" element={
+          <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
+            <Perfil />
+          </ProtectedRoute>
+} />
       </Routes>
     </BrowserRouter>
   )
