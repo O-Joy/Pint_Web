@@ -12,6 +12,7 @@ router.put('/tm/candidaturas/:numCandidatura/aprovar', tmController.aprovarCandi
 router.put('/tm/candidaturas/:numCandidatura/rejeitar', tmController.rejeitarCandidatura);
 router.put('/tm/candidaturas/:numCandidatura/devolver', tmController.devolverCandidatura);
 router.get('/tm/estatisticas-mensais', tmController.getEstatisticasMensais);
+router.get('/tm/historico-badges', tmController.getHistoricoBadges);
 
 router.get('/tm/top-consultores', tmController.getTopConsultores);
 module.exports = router;

@@ -279,3 +279,40 @@ exports.getEstatisticasMensais = async (req, res) => {
   }
 }
 
+// GET /api/tm/historico-badges
+exports.getHistoricoBadges = async (req, res) => {
+  try {
+    const historico = await BadgeUtilizador.findAll({
+      order: [['dataAtribuicao', 'DESC']],
+    })
+
+    const resultado = await Promise.all(historico.map(async (h) => {
+      const utilizador = await Utilizador.findOne({ where: { idUtilizador: h.idUtilizador } })
+      const badge = await BadgeRegular.findOne({ where: { idBadgeRegular: h.idBadgeRegular } })
+      
+      let nomeArea = '-', nomeNivel = '-'
+      if (badge?.idArea) {
+        const area = await Area.findOne({ where: { idArea: badge.idArea } })
+        if (area) nomeArea = area.nomeArea
+      }
+      if (badge?.idNivel) {
+        const nivel = await Nivel.findOne({ where: { idNivel: badge.idNivel } })
+        if (nivel) nomeNivel = nivel.nomeNivel
+      }
+
+      return {
+        nomeBadge: badge?.nomeBadge || '-',
+        nomeArea,
+        nomeNivel,
+        nomeConsultor: utilizador?.nomeUtilizador || '-',
+        estado: h.ativo ? 'Obtido' : 'Em Processo',
+        dataAtribuicao: h.dataAtribuicao,
+      }
+    }))
+
+    return res.json(resultado)
+  } catch (err) {
+    console.error('[tm] getHistoricoBadges:', err.message)
+    return res.status(500).json({ error: 'Erro interno' })
+  }
+}

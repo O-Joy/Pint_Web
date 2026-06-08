@@ -23,7 +23,7 @@ import DashboardServiceLine from './views/serviceline/Dashboard'
 //Talent Manager
 import DashboardTalent from './views/talentmanager/Dashboard'
 //import Validacoes from './views/talentmanager/Validacoes'
-//import Badges from './views/talentmanager/Badges'
+import Badges from './views/talentmanager/Badges'
 //import Consultores from './views/talentmanager/Consultores'
 //import Relatorios from './views/talentmanager/Relatorios'
 //import Notificacoes from './views/talentmanager/Notificacoes'
@@ -62,16 +62,17 @@ function App() {
             <DashboardTalent />
           </ProtectedRoute>
         } />
-        {/*<Route path="/talent/validacoes" element={
-          <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Validacoes />
-          </ProtectedRoute>
-        } />
         <Route path="/talent/badges" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
             <Badges />
           </ProtectedRoute>
         } />
+        {/*<Route path="/talent/validacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Validacoes />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/talent/consultores" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
             <Consultores />
