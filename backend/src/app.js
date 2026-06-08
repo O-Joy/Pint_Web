@@ -46,6 +46,7 @@ const adminRoutes = require('./routes/admin.routes');
 const talentManagerRoutes = require('./routes/talentmanager.routes');
 const dashboardConsultorRoutes = require('./routes/dashboardConsultor.routes');
 const objetivosRoutes = require('./routes/objetivos.routes');
+const servicelineRoutes = require('./routes/serviceline.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', badgesRoutes);
@@ -57,6 +58,7 @@ app.use('/api', dashboardConsultorRoutes);
 app.use('/api', objetivosRoutes);
 app.use('/api', talentManagerRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', servicelineRoutes);
 
 //Arrancar o servidor
 
