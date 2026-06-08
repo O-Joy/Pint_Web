@@ -100,6 +100,38 @@ function App() {
           </ProtectedRoute>
         } />
 
+        {/* Rotas do Service Line Leader */}
+        <Route path="/serviceline/dashboard" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <DashboardServiceLine />
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/validacoes" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <div>Validações — em construção</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/badges" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <div>Badges — em construção</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/consultores" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <div>Consultores — em construção</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/relatorios" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <div>Relatórios — em construção</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <div>Notificações — em construção</div>
+          </ProtectedRoute>
+        } />
+
         {/* Rotas do Administrador — só perfil 'administrador' tem acesso */}
         <Route path="/admin/dashboard" element={
           <ProtectedRoute perfisPermitidos={['administrador']}>
