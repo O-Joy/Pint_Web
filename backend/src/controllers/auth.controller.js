@@ -4,7 +4,7 @@ const Utilizador = require('../model/Utilizador');
 const Consultor = require('../model/Consultor');
 const Area = require('../model/Area');
 const LearningPath = require('../model/LearningPath');
-const { sequelize } = require('../model/utilizador');
+const sequelize = require('../config/database');
 const codigosRecuperacao = new Map();
 
 //LOGIN

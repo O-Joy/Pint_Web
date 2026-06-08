@@ -23,6 +23,7 @@ module.exports = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
+    console.log('JWT ERROR:', err.name, err.message, 'Token:', token?.substring(0,20))
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Sessão expirada. Faz login novamente.' });
     }

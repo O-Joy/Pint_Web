@@ -299,8 +299,8 @@ exports.submeterCandidatura = async (req, res) => {
       return res.status(404).json({ error: 'Candidatura não encontrada.' });
     }
 
-    // Só pode submeter se estiver em rascunho (1) ou retificação (2 ou 4)
-    if (![1, 2, 4].includes(candidatura.idEstadoAtual)) {
+    // Só pode submeter se estiver em rascunho (0) ou retificação (2 ou 4) ou
+    if (![0, 2, 4].includes(candidatura.idEstadoAtual)) {
       return res.status(400).json({ error: 'Esta candidatura não pode ser submetida no estado atual.' });
     }
 
