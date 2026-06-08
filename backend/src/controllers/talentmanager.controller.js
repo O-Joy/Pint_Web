@@ -252,14 +252,8 @@ exports.getTopConsultores = async (req, res) => {
 exports.getEstatisticasMensais = async (req, res) => {
   try {
     const { QueryTypes } = require('sequelize')
-    const { Sequelize } = require('sequelize')
-    
-    const sequelize = new Sequelize(
-      process.env.DB_NAME,
-      process.env.DB_USER,
-      process.env.DB_PASSWORD,
-      { host: process.env.DB_HOST, port: process.env.DB_PORT, dialect: 'postgres', logging: false }
-    )
+    const sequelize = require('../config/database')
+
 
     const resultado = await sequelize.query(`
       SELECT 
@@ -278,4 +272,3 @@ exports.getEstatisticasMensais = async (req, res) => {
     return res.status(500).json({ error: 'Erro interno' })
   }
 }
-

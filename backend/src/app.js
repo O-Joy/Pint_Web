@@ -42,6 +42,8 @@ const perfilRoutes = require('./routes/perfil.routes');
 const notificacoesRoutes = require('./routes/notificacoes.routes');
 const gamificationRoutes = require('./routes/gamification.routes');
 const candidaturasRoutes = require('./routes/candidaturas.routes');
+const adminRoutes = require('./routes/admin.routes');
+const talentManagerRoutes = require('./routes/talentmanager.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', badgesRoutes);
@@ -49,22 +51,12 @@ app.use('/api', perfilRoutes);
 app.use('/api', notificacoesRoutes);
 app.use('/api', gamificationRoutes);
 app.use('/api', candidaturasRoutes);
+app.use('/api', adminRoutes);
+app.use('/api', talentManagerRoutes);
 
 //Arrancar o servidor
 
-const { Sequelize } = require('sequelize');
-
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',
-    logging: false,
-  }
-);
+const sequelize = require('./config/database');
 
 const PORT = process.env.PORT || 3001;  // // Lê a porta do .env
 //  — se não existir usa 3001 por defeito
