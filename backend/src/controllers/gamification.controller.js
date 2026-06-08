@@ -11,7 +11,7 @@ exports.getRanking = async (req, res) => {
         'idUtilizador',
         [Sequelize.fn('SUM', Sequelize.col('qt_pontos')), 'totalPontos'],
       ],
-      group: ['Pontuacao.id_utilizador', 'utilizador.id_utilizador'],
+      group: ['Pontuacao.id_utilizador', 'Utilizador.id_utilizador', 'Utilizador.nome_utilizador', 'Utilizador.url_foto'],
       order: [[Sequelize.fn('SUM', Sequelize.col('qt_pontos')), 'DESC']],
       include: [
         {
