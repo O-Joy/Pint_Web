@@ -3,6 +3,9 @@ import LayoutTM from './components/LayoutTM'
 import api from '../../services/api'
 import { FiDownload, FiSearch } from 'react-icons/fi'
 import { FaBolt } from 'react-icons/fa'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const coresNivel = {
   'Júnior': { bg: '#FFF3E0', color: '#F57C00' },
@@ -43,11 +46,50 @@ export default function Badges() {
     }).catch(() => {})
   }, [])
 
-  const badgesFiltrados = badges.filter(b => {
-    const matchFiltro = b.nome?.toLowerCase().includes(filtro.toLowerCase())
-    const matchSL = filtroSL === 'todas' || b.nomeServiceLine === filtroSL
-    return matchFiltro && matchSL
-  })
+        const exportarExcel = () => {
+        const dados = badges.map(b => ({
+          'Nome': b.nome,
+          'Nível': b.nomeNivel || '-',
+          'Área': b.nomeArea || '-',
+          'Service Line': b.nomeServiceLine || '-',
+          'Pontos': b.pontos,
+          'Validade (dias)': b.validadeDias || '-',
+        }))
+        const ws = XLSX.utils.json_to_sheet(dados)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Badges')
+        XLSX.writeFile(wb, 'badges.xlsx')
+      }
+
+      const exportarPDF = () => {
+        const doc = new jsPDF()
+        doc.setFontSize(16)
+        doc.text('Catálogo de Badges', 14, 15)
+        autoTable(doc, {
+          startY: 25,
+          head: [['Nome', 'Nível', 'Área', 'Service Line', 'Pontos']],
+          body: badges.map(b => [
+            b.nome,
+            b.nomeNivel || '-',
+            b.nomeArea || '-',
+            b.nomeServiceLine || '-',
+            b.pontos,
+          ]),
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [57, 99, 156] },
+        })
+        doc.save('badges.pdf')
+      }
+
+  const badgesFiltrados = (filtroTipo === 'especial' ? [] : badges).filter(b => {
+  const matchFiltro = b.nome?.toLowerCase().includes(filtro.toLowerCase())
+  const matchSL = filtroSL === 'todas' || b.nomeServiceLine === filtroSL
+  return matchFiltro && matchSL
+})
+
+const especiaisVisiveis = (filtroTipo === 'regular' ? [] : badgesEspeciais).filter(b =>
+  b.nome?.toLowerCase().includes(filtro.toLowerCase())
+)
 
   const totalPaginas = Math.ceil(badgesFiltrados.length / porPagina)
   const badgesPagina = badgesFiltrados.slice((pagina - 1) * porPagina, pagina * porPagina)
@@ -111,10 +153,10 @@ export default function Badges() {
             <p style={{ color: '#6b7280', fontSize: 13 }}>{badges.length + badgesEspeciais.length} badges disponíveis</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={exportarExcel} style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <FiDownload /> Exportar Excel
             </button>
-            <button style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={exportarPDF} style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <FiDownload /> Exportar PDF
             </button>
           </div>
@@ -170,16 +212,16 @@ export default function Badges() {
               </div>
             )}
 
-            {badgesEspeciais.length > 0 && (
-              <>
-                <h3 style={{ color: '#39639C', fontWeight: 700, marginBottom: 4 }}>Badges Especiais</h3>
-                <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 16 }}>{badgesEspeciais.length} badges especiais</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-                  {badgesEspeciais.map((b, i) => <CardBadge key={i} b={b} especial />)}
-                </div>
-              </>
-            )}
+        {especiaisVisiveis.length > 0 && (
+          <>
+            <h3 style={{ color: '#39639C', fontWeight: 700, marginBottom: 4 }}>Badges Especiais</h3>
+            <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 16 }}>{especiaisVisiveis.length} badges especiais</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+              {especiaisVisiveis.map((b, i) => <CardBadge key={i} b={b} especial />)}
+            </div>
           </>
+        )}
+        </>
         )}
         
         <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginTop: 24 }}>
@@ -227,7 +269,7 @@ export default function Badges() {
                 ))}
             </tbody>
           </table>
-        </div>
+      </div>
       </div>
     </LayoutTM>
   )
