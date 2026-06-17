@@ -261,6 +261,7 @@ body {
 
 .pg-content {
   padding: 1.5rem;
+  margin-left: 200px;
 }
 /*=====================================================
 LOGO
@@ -276,13 +277,18 @@ barras
 ============================================================*/
  
 .sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
   width: 200px;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
   background: white;
   border-right: 1px solid var(--cor-borda);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow-y: auto;
+  z-index: 100;
 }
  
 .sidebar-logo {
