@@ -8,7 +8,7 @@ const coresNivel = {
   'Lider': { bg: '#E8F5E9', color: '#43A047' },
 }
 
-export default function CardBadge({ b, especial }) {
+export default function CardBadge({ b, especial, onInfo }) {
   const nivel = b.nomeNivel || ''
   const cores = coresNivel[nivel] || { bg: '#f0f0f0', color: '#555' }
   const expiracaoHoras = b.validadeDias ? b.validadeDias * 24 : null
@@ -40,7 +40,7 @@ export default function CardBadge({ b, especial }) {
         </div>
       )}
 
-      <button style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto' }}>
+      <button onClick={() => onInfo(b)} style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto' }}>
         Informações
       </button>
 
