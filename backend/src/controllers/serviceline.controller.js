@@ -6,6 +6,7 @@ const SlLeader              = require('../model/slleader');
 const Utilizador            = require('../model/utilizador');
 const Consultor             = require('../model/consultor');
 const Area                  = require('../model/area');
+const ServiceLine           = require('../model/serviceLine');
 const BadgeRegular          = require('../model/badgeRegular');
 const BadgeUtilizador       = require('../model/badgeUtilizador');
 const Candidatura           = require('../model/candidatura');
@@ -16,6 +17,8 @@ const UtilizadorNotificacao = require('../model/utilizadorNotificacao');
 const Pontuacao             = require('../model/pontuacao');
 const Nivel                 = require('../model/nivel');
 const Requisitos            = require('../model/requisitos');
+const Evidencia             = require('../model/evidencia');
+const BadgeEspecial         = require('../model/badgeEspecial');
 
 // IDs da tabela ESTADOS_CANDIDATURA
 const ESTADO_VALIDACAO_SLL   = 3;
@@ -27,6 +30,7 @@ const ESTADO_REJEITADA       = 6;
 // DASHBOARD
 // ═══════════════════════════════════════════════════════
 
+//Controller para o dashboard
 exports.getDashboard = async (req, res) => {
   try {
     const idUtilizador = req.user.idUtilizador;
@@ -66,14 +70,12 @@ exports.getDashboard = async (req, res) => {
       },
     });
     const numsCandAprovadas = historicosAprovados.map(h => h.numCandidatura);
-    const aprovados = numsCandAprovadas.length > 0
-      ? await Candidatura.count({
+    const aprovados = numsCandAprovadas.length > 0 ? await Candidatura.count({
           where: {
             numCandidatura: { [Op.in]: numsCandAprovadas },
             idBadgeRegular: { [Op.in]: idsBadges },
           },
-        })
-      : 0;
+        }) : 0;
 
     return res.json({ pendentes, consultores, aprovados, variacao: 0 });
   } catch (err) {
@@ -231,7 +233,6 @@ exports.getHistoricoCandidatura = async (req, res) => {
 exports.getEvidenciasCandidatura = async (req, res) => {
   const numCandidatura = parseInt(req.params.id);
   try {
-    const { Evidencia } = require('../model/evidencia');
     const evidencias = await Evidencia.findAll({ where: { numCandidatura } });
 
     const resultado = await Promise.all(evidencias.map(async (e) => {
@@ -361,18 +362,52 @@ exports.devolverCandidatura = async (req, res) => {
 // BADGES / CONSULTORES / NOTIFICAÇÕES
 // ═══════════════════════════════════════════════════════
 
+//Controller para ir buscar todos os badges (regulares + especiais)
 exports.getBadges = async (req, res) => {
   try {
-    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
-    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine, ativo: 1 }, order: [['nomeBadge', 'ASC']] });
-    const resultado = await Promise.all(badges.map(async (b) => {
+    // Todos os badges regulares ativos
+    const badges = await BadgeRegular.findAll({ where: { ativo: 1 }, order: [['nomeBadge', 'ASC']] });
+    const regulares = await Promise.all(badges.map(async (b) => {
       const nivel = await Nivel.findOne({ where: { idNivel: b.idNivel } });
-      return { id: b.idBadgeRegular, nome: b.nomeBadge, descricao: b.descricao, pontos: b.pontos, urlImagem: b.urlImagemBadge, nomeNivel: nivel?.nomeNivel ?? '-' };
+      const area  = b.idArea ? await Area.findOne({ where: { idArea: b.idArea } }) : null;
+      const sl    = b.idServiceLine ? await ServiceLine.findOne({ where: { idServiceLine: b.idServiceLine } }) : null;
+      return {
+        id: b.idBadgeRegular,
+        nome: b.nomeBadge,
+        descricao: b.descricao,
+        pontos: b.pontos,
+        urlImagem: b.urlImagemBadge,
+        validadeDias: b.validadeDias,
+        nomeNivel: nivel?.nomeNivel ?? '-',
+        nomeArea: area?.nomeArea ?? null,
+        nomeServiceLine: sl?.nomeSl ?? null,
+        especial: false,
+      };
     }));
-    return res.json(resultado);
-  } catch (err) { return res.status(500).json({ error: 'Erro ao carregar badges.' }); }
+
+    // Todos os badges especiais ativos
+    const especiais = await BadgeEspecial.findAll({ where: { ativo: 1 }, order: [['nomeBadgeEspecial', 'ASC']] });
+    const especiaisFormatados = especiais.map(b => ({
+      id: b.idBadgeEspecial,
+      nome: b.nomeBadgeEspecial,
+      descricao: b.descricao,
+      pontos: b.pontos,
+      urlImagem: b.urlImagemEspecial,
+      validadeDias: b.validadeDias,
+      nomeNivel: null,
+      nomeArea: null,
+      nomeServiceLine: null,
+      especial: true,
+    }));
+
+    return res.json({ regulares, especiais: especiaisFormatados });
+  } catch (err) {
+    console.error('[sl] getBadges:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar badges.' });
+  }
 };
 
+//Controller para pesquisar todos os requisitos necessários para cada badge.
 exports.getRequisitosBadge = async (req, res) => {
   try {
     const requisitos = await Requisitos.findAll({ where: { idBadgeRegular: parseInt(req.params.id) } });
@@ -380,9 +415,14 @@ exports.getRequisitosBadge = async (req, res) => {
   } catch (err) { return res.status(500).json({ error: 'Erro ao carregar requisitos.' }); }
 };
 
+//Controller para ir buscar 
 exports.getConsultores = async (req, res) => {
   try {
     const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    if (!slLeader) {
+      return res.status(404).json({ error: 'SL Leader não encontrado para este utilizador.' });
+    }
+
     const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
     const consultores = await Consultor.findAll({ where: { idArea: { [Op.in]: areas.map(a => a.idArea) } } });
 
@@ -397,7 +437,10 @@ exports.getConsultores = async (req, res) => {
 
     resultado.sort((a, b) => b.totalPontos - a.totalPontos);
     return res.json(resultado);
-  } catch (err) { return res.status(500).json({ error: 'Erro ao carregar consultores.' }); }
+  } catch (err) {
+    console.error('[sl] getConsultores:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar consultores.' });
+  }
 };
 
 exports.getRanking = exports.getConsultores;
@@ -413,9 +456,311 @@ exports.getNotificacoes = async (req, res) => {
   } catch (err) { return res.status(500).json({ error: 'Erro ao carregar notificações.' }); }
 };
 
-// Relatórios — a desenvolver na página de relatórios
-exports.relCandidaturas      = async (req, res) => res.json([]);
-exports.exportarPedidos      = async (req, res) => res.json([]);
-exports.exportarBadges       = async (req, res) => res.json([]);
-exports.exportarConsultores  = async (req, res) => res.json([]);
-exports.exportarAprovacoes   = async (req, res) => res.json([]);
+// ═══════════════════════════════════════════════════════
+// RELATÓRIOS — KPIs e Gráficos
+// ═══════════════════════════════════════════════════════
+
+exports.getRelatorioKpis = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const idServiceLine = slLeader.idServiceLine;
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+
+    const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+
+    // Badges aprovados este mês
+    const aprovadosIds = (await HistoricoCandidatura.findAll({
+      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMes } },
+    })).map(h => h.numCandidatura);
+    const badgesAprovados = aprovadosIds.length > 0
+      ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: aprovadosIds }, idBadgeRegular: { [Op.in]: idsBadges } } })
+      : 0;
+
+    // Total candidaturas da SL
+    const totalCand = idsBadges.length > 0
+      ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
+    const taxaAprovacao = totalCand > 0 ? Math.round((badgesAprovados / totalCand) * 100) : 0;
+
+    // Consultores com pelo menos 1 badge
+    const areas = await Area.findAll({ where: { idServiceLine } });
+    const consultores = await Consultor.findAll({ where: { idArea: { [Op.in]: areas.map(a => a.idArea) } } });
+    let consultoresComBadge = 0;
+    for (const c of consultores) {
+      const total = await BadgeUtilizador.count({ where: { idUtilizador: c.idUtilizador } });
+      if (total > 0) consultoresComBadge++;
+    }
+
+    return res.json({ badgesAprovados, taxaAprovacao, consultoresComBadge, mediaSLA: 48 });
+  } catch (err) {
+    console.error('[sl] getRelatorioKpis:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar KPIs.' });
+  }
+};
+
+exports.getEvolucaoMensal = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const candidaturas = await Candidatura.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges } } });
+    const numsCand = candidaturas.map(c => c.numCandidatura);
+    if (numsCand.length === 0) return res.json([]);
+
+    const oitoAtras = new Date(); oitoAtras.setMonth(oitoAtras.getMonth() - 8);
+    const historicos = await HistoricoCandidatura.findAll({
+      where: { numCandidatura: { [Op.in]: numsCand }, idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: oitoAtras } },
+      order: [['dataAlteracao', 'ASC']],
+    });
+
+    const porMes = {};
+    historicos.forEach(h => {
+      const d = new Date(h.dataAlteracao);
+      const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const chave = meses[d.getMonth()];
+      porMes[chave] = (porMes[chave] || 0) + 1;
+    });
+
+    return res.json(Object.entries(porMes).map(([mes, total]) => ({ mes, total })));
+  } catch (err) {
+    console.error('[sl] getEvolucaoMensal:', err.message);
+    return res.status(500).json({ error: 'Erro.' });
+  }
+};
+
+exports.getBadgesPorNivel = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const atribuidos = await BadgeUtilizador.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges } } });
+    const porNivel = {};
+    for (const bu of atribuidos) {
+      const badge = badges.find(b => b.idBadgeRegular === bu.idBadgeRegular);
+      const nivel = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+      const nome = nivel?.nomeNivel ?? 'Outro';
+      porNivel[nome] = (porNivel[nome] || 0) + 1;
+    }
+    const total = Object.values(porNivel).reduce((a, b) => a + b, 0);
+    return res.json(Object.entries(porNivel).map(([nome, count]) => ({
+      nome, count, percentagem: total > 0 ? Math.round((count / total) * 100) : 0,
+    })));
+  } catch (err) {
+    console.error('[sl] getBadgesPorNivel:', err.message);
+    return res.status(500).json({ error: 'Erro.' });
+  }
+};
+
+exports.getBadgesPorArea = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+
+    const resultado = await Promise.all(areas.map(async (a) => {
+      const badgesArea = await BadgeRegular.findAll({ where: { idArea: a.idArea } });
+      const idsBadges = badgesArea.map(b => b.idBadgeRegular);
+      const aprovados = idsBadges.length > 0
+        ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA } }) : 0;
+      const emProcesso = idsBadges.length > 0
+        ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: { [Op.in]: [1,2,3] } } }) : 0;
+      return { nome: a.nomeArea, aprovados, emProcesso };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] getBadgesPorArea:', err.message);
+    return res.status(500).json({ error: 'Erro.' });
+  }
+};
+
+exports.getCumprimentoSLA = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json({ percentagem: 0 });
+
+    const candidaturas = await Candidatura.findAll({
+      where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA },
+    });
+
+    let dentroPrazo = 0;
+    for (const c of candidaturas) {
+      const historicos = await HistoricoCandidatura.findAll({ where: { numCandidatura: c.numCandidatura }, order: [['dataAlteracao', 'ASC']] });
+      const submissao = historicos.find(h => h.idEstadoAtual === 1);
+      const aprovacao = historicos.find(h => h.idEstadoAtual === ESTADO_APROVADA);
+      if (submissao && aprovacao) {
+        const horas = (new Date(aprovacao.dataAlteracao) - new Date(submissao.dataAlteracao)) / (1000 * 60 * 60);
+        if (horas <= 48) dentroPrazo++;
+      }
+    }
+
+    const percentagem = candidaturas.length > 0 ? Math.round((dentroPrazo / candidaturas.length) * 100) : 0;
+    return res.json({ percentagem, total: candidaturas.length, dentroPrazo });
+  } catch (err) {
+    console.error('[sl] getCumprimentoSLA:', err.message);
+    return res.status(500).json({ error: 'Erro.' });
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// RELATÓRIOS — Exportações
+// ═══════════════════════════════════════════════════════
+
+// Candidaturas da SL (com filtros opcionais de data e estado)
+exports.relCandidaturas = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const idServiceLine = slLeader.idServiceLine;
+
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const where = { idBadgeRegular: { [Op.in]: idsBadges } };
+    if (req.query.dataInicio) where.dataCriacao = { ...where.dataCriacao, [Op.gte]: new Date(req.query.dataInicio) };
+    if (req.query.dataFim)    where.dataCriacao = { ...where.dataCriacao, [Op.lte]: new Date(req.query.dataFim) };
+    if (req.query.estado)     where.idEstadoAtual = parseInt(req.query.estado);
+
+    const candidaturas = await Candidatura.findAll({ where, order: [['dataCriacao', 'DESC']] });
+
+    const resultado = await Promise.all(candidaturas.map(async (c) => {
+      const candidato = await Utilizador.findOne({ where: { idUtilizador: c.idCandidato } });
+      const badge     = await BadgeRegular.findOne({ where: { idBadgeRegular: c.idBadgeRegular } });
+      const nivel     = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+      const estado    = await EstadosCandidatura.findOne({ where: { idEstado: c.idEstadoAtual } });
+      const area      = badge?.idArea ? await Area.findOne({ where: { idArea: badge.idArea } }) : null;
+
+      return {
+        numCandidatura: c.numCandidatura,
+        dataCriacao: c.dataCriacao,
+        nomeConsultor: candidato?.nomeUtilizador ?? '-',
+        nomeBadge: badge?.nomeBadge ?? '-',
+        nomeNivel: nivel?.nomeNivel ?? '-',
+        nomeArea: area?.nomeArea ?? '-',
+        nomeEstado: estado?.nomeEstado ?? '-',
+        idEstadoAtual: c.idEstadoAtual,
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] relCandidaturas:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar relatório.' });
+  }
+};
+
+// Pedidos (alias de relCandidaturas para exportação)
+exports.exportarPedidos = exports.relCandidaturas;
+
+// Badges atribuídos na SL
+exports.exportarBadges = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const idServiceLine = slLeader.idServiceLine;
+
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const atribuidos = await BadgeUtilizador.findAll({
+      where: { idBadgeRegular: { [Op.in]: idsBadges } },
+      order: [['dataAtribuicao', 'DESC']],
+    });
+
+    const resultado = await Promise.all(atribuidos.map(async (bu) => {
+      const utilizador = await Utilizador.findOne({ where: { idUtilizador: bu.idUtilizador } });
+      const badge      = await BadgeRegular.findOne({ where: { idBadgeRegular: bu.idBadgeRegular } });
+      const nivel      = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+      const area       = badge?.idArea ? await Area.findOne({ where: { idArea: badge.idArea } }) : null;
+
+      return {
+        idBadgeUtilizador: bu.idBadgeUtilizador,
+        nomeConsultor: utilizador?.nomeUtilizador ?? '-',
+        nomeBadge: badge?.nomeBadge ?? '-',
+        nomeNivel: nivel?.nomeNivel ?? '-',
+        nomeArea: area?.nomeArea ?? '-',
+        dataAtribuicao: bu.dataAtribuicao,
+        valido: bu.valido ? 'Sim' : 'Não',
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] exportarBadges:', err.message);
+    return res.status(500).json({ error: 'Erro ao exportar badges.' });
+  }
+};
+
+// Consultores da SL
+exports.exportarConsultores = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const consultores = await Consultor.findAll({ where: { idArea: { [Op.in]: areas.map(a => a.idArea) } } });
+
+    const resultado = await Promise.all(consultores.map(async (c) => {
+      const u           = await Utilizador.findOne({ where: { idUtilizador: c.idUtilizador } });
+      const area        = await Area.findOne({ where: { idArea: c.idArea } });
+      const totalBadges = await BadgeUtilizador.count({ where: { idUtilizador: c.idUtilizador } });
+      const pontuacoes  = await Pontuacao.findAll({ where: { idUtilizador: c.idUtilizador } });
+      const totalPontos = pontuacoes.reduce((acc, p) => acc + (p.qtPontos || 0), 0);
+
+      return {
+        nome: u?.nomeUtilizador ?? '-',
+        email: u?.email ?? '-',
+        nomeArea: area?.nomeArea ?? '-',
+        totalBadges,
+        totalPontos,
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] exportarConsultores:', err.message);
+    return res.status(500).json({ error: 'Erro ao exportar consultores.' });
+  }
+};
+
+// Aprovações da SL
+exports.exportarAprovacoes = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const idsBadges = badges.map(b => b.idBadgeRegular);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const aprovadas = await Candidatura.findAll({
+      where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA },
+      order: [['dataCriacao', 'DESC']],
+    });
+
+    const resultado = await Promise.all(aprovadas.map(async (c) => {
+      const candidato = await Utilizador.findOne({ where: { idUtilizador: c.idCandidato } });
+      const badge     = await BadgeRegular.findOne({ where: { idBadgeRegular: c.idBadgeRegular } });
+      const nivel     = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+      const historico = await HistoricoCandidatura.findOne({
+        where: { numCandidatura: c.numCandidatura, idEstadoAtual: ESTADO_APROVADA },
+        order: [['dataAlteracao', 'DESC']],
+      });
+
+      return {
+        numCandidatura: c.numCandidatura,
+        nomeConsultor: candidato?.nomeUtilizador ?? '-',
+        nomeBadge: badge?.nomeBadge ?? '-',
+        nomeNivel: nivel?.nomeNivel ?? '-',
+        dataAprovacao: historico?.dataAlteracao ?? c.dataCriacao,
+        comentario: historico?.comentario ?? '-',
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] exportarAprovacoes:', err.message);
+    return res.status(500).json({ error: 'Erro ao exportar aprovações.' });
+  }
+};

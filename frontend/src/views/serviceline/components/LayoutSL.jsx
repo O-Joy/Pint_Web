@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { label: 'Badges',       path: '/serviceline/badges',       icon: icons.badges },
   { label: 'Consultores',  path: '/serviceline/consultores',  icon: icons.utilizadores },
   { label: 'Relatórios',   path: '/serviceline/relatorios',   icon: icons.relatorios },
-  { label: 'Notificações', path: '/serviceline/notificacoes', icon: icons.pedidos },
+  { label: 'Gamification', path: '/serviceline/gamification', icon: icons.pedidos },
 ]
 
 export default function LayoutSL({ children }) {

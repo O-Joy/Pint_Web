@@ -10,10 +10,17 @@ export default function Topbar() {
 
   return (
     <>
-      {/* Logo — lado esquerdo da topbar */}
-      <img src="/logo-softinsa.svg" alt="Softinsa" style={{ height: '40px' }} />
+      <div style={{
+        width: 220,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        flexShrink: 0,
+      }}>
+        <img src="/logo-softinsa.svg" alt="Softinsa" style={{ height: '60px' }} />
+      </div>
 
-      {/* Pesquisa — centro */}
+
       <div className="topbar-search">
         <FaSearch />
         <input
@@ -25,7 +32,6 @@ export default function Topbar() {
         />
       </div>
 
-      {/* Notificações — lado direito */}
       <button className="topbar-notif-btn" onClick={() => navigate('/consultor/notificacoes')}>
         <IoIosNotifications size={28}/>
       </button>

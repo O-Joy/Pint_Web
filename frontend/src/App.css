@@ -1,4 +1,5 @@
 /* Estilo global das páginas*/
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
   --cor-primaria: #39639C;        /* azul principal — igual ao mobile */
@@ -20,7 +21,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', sans-serif;
   background: var(--cor-fundo);
   color: var(--cor-texto);
 }
@@ -235,8 +236,8 @@ body {
   left: 0;
   right: 0;
   height: 60px;
-  background: white;
-  border-bottom: 1px solid var(--cor-borda);
+  background: #FBFBFB;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -251,6 +252,7 @@ body {
 .pg-body {
   margin-top: 60px;
   min-height: calc(100vh - 60px);
+  background: #FBFBFB;
 }
 
 .pg-layout {
@@ -260,7 +262,12 @@ body {
 }
 
 .pg-content {
-  padding: 1.5rem;
+  padding: 1.75rem;
+  margin: 1.25rem;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  min-height: calc(100vh - 110px);
 }
 /*=====================================================
 LOGO
@@ -276,48 +283,43 @@ barras
 ============================================================*/
  
 .sidebar {
-  width: 200px;
+  width: 220px;
   min-height: calc(100vh - 60px);
-  background: white;
-  border-right: 1px solid var(--cor-borda);
+  background: #FBFBFB;
+  border-right: none;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
- 
-.sidebar-logo {
-  padding: 1.25rem;
-  border-bottom: 1px solid var(--cor-borda);
-  flex-shrink: 0;
-}
- 
+
 .sidebar-nav {
   flex: 1;
-  padding: 1rem 0.75rem;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   overflow-y: auto;
 }
- 
+
 .sidebar-nav-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--cor-texto-secundario);
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
- 
+
 .sidebar-nav-item:hover {
-  background: var(--cor-fundo);
+  background: #eef3fa;
   color: var(--cor-primaria);
 }
- 
+
 .sidebar-nav-item.active {
   background: var(--cor-primaria);
   color: white;
@@ -394,13 +396,15 @@ barras
 .topbar-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--cor-fundo);
-  border: 1px solid var(--cor-borda);
-  border-radius: 8px;
-  padding: 0.4rem 0.75rem;
-  width: 300px;
+  gap: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  width: 420px;
+  margin: 0 auto;
   color: var(--cor-texto-secundario);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
  
 .topbar-search-input {

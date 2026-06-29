@@ -19,6 +19,11 @@ import DashboardAdmin from './views/admin/Dashboard'
 
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
+import Consultores from './views/serviceline/Consultores'
+import Validacoes from './views/serviceline/Validacoes'
+import Relatorios from './views/serviceline/Relatorios'
+import Gamification from './views/serviceline/Gamification'
+import BadgesSL from './views/serviceline/Badges'
 
 //Talent Manager
 import DashboardTalent from './views/talentmanager/Dashboard'
@@ -109,27 +114,27 @@ function App() {
         } />
         <Route path="/serviceline/validacoes" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <div>Validações — em construção</div>
+            <Validacoes/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/badges" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <div>Badges — em construção</div>
+            <BadgesSL/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/consultores" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <div>Consultores — em construção</div>
+            <Consultores/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/relatorios" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <div>Relatórios — em construção</div>
+            <Relatorios />
           </ProtectedRoute>
         } />
-        <Route path="/serviceline/notificacoes" element={
+        <Route path="/serviceline/gamification" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <div>Notificações — em construção</div>
+            <Gamification/>
           </ProtectedRoute>
         } />
 
