@@ -16,7 +16,7 @@ function getCoresNivel(nivel) {
   return { bg: '#f0f0f0', color: '#555' }
 }
 
-export default function CardBadge({ b, especial, onInformacoes }) {
+export default function CardBadge({ b, especial }) {
   const nivel = b.nomeNivel || ''
   const cores = getCoresNivel(nivel)
 
@@ -73,15 +73,7 @@ export default function CardBadge({ b, especial, onInformacoes }) {
         </div>
       )}
 
-      {/* Botão */}
-      <button
-        onClick={onInformacoes}
-        style={{
-          background: '#39639C', color: '#fff', border: 'none',
-          borderRadius: 8, padding: '9px 0', fontSize: 13,
-          fontWeight: 600, cursor: 'pointer', marginTop: 'auto',
-        }}
-      >
+      <button style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto' }}>
         Informações
       </button>
     </div>

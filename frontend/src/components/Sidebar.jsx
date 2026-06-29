@@ -9,6 +9,8 @@ import { FaClipboardList } from "react-icons/fa6"
 import { IoGrid } from "react-icons/io5"
 import { LuTarget } from "react-icons/lu"
 import { RiLogoutBoxRLine } from "react-icons/ri";
+import { useState } from 'react'
+import LogoutModal from './LogoutModal'
 
 export const icons = {
   dashboard: <IoGrid />,
@@ -43,10 +45,19 @@ export default function Sidebar({ navItems, perfil }) {
   const navigate = useNavigate()
   const utilizador = getUtilizador()
   const inicial = utilizador?.nome?.[0]?.toUpperCase() || 'U'
+  const [mostrarModalLogout, setMostrarModalLogout] = useState(false)
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+  setMostrarModalLogout(true)
+  }
+
+  const handleConfirmarLogout = () => {
     limparSessao()
     navigate('/login')
+  }
+
+  const handleCancelarLogout = () => {
+    setMostrarModalLogout(false)
   }
 
   return (
@@ -79,7 +90,7 @@ export default function Sidebar({ navItems, perfil }) {
         gap: '12px',
         flexShrink: 0
       }}>
-        <button className="sidebar-logout" onClick={handleLogout}>
+        <button className="sidebar-logout" onClick={handleLogoutClick}>
           {icons.logout}
           <span>Terminar Sessão</span>
         </button>
@@ -93,6 +104,13 @@ export default function Sidebar({ navItems, perfil }) {
         </NavLink>
 
       </div>
+
+      {mostrarModalLogout && (
+        <LogoutModal
+          onConfirm={handleConfirmarLogout}
+          onCancel={handleCancelarLogout}
+          />
+      )}
 
     </aside>
   )
