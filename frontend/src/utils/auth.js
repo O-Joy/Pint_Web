@@ -30,3 +30,13 @@ export const limparSessao = () => {
   sessionStorage.removeItem('token')
   sessionStorage.removeItem('utilizador')
 }
+
+// Grava uma sessão nova — usado no login
+// Limpa SEMPRE os dois storages primeiro, para nunca ficar lixo de uma sessão
+// anterior (ex: outro utilizador que fechou o browser sem fazer logout)
+export const guardarSessao = (token, utilizador, manterSessao) => {
+  limparSessao()
+  const storage = manterSessao ? localStorage : sessionStorage
+  storage.setItem('token', token)
+  storage.setItem('utilizador', JSON.stringify(utilizador))
+}
