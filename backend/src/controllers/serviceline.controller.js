@@ -21,10 +21,22 @@ const Evidencia             = require('../model/evidencia');
 const BadgeEspecial         = require('../model/badgeEspecial');
 
 // IDs da tabela ESTADOS_CANDIDATURA
+const ESTADO_RASCUNHO        = 0;
 const ESTADO_VALIDACAO_SLL   = 3;
 const ESTADO_RETIFICACAO_SLL = 4;
 const ESTADO_APROVADA        = 5;
 const ESTADO_REJEITADA       = 6;
+// Estados considerados "em processo" (candidatura submetida, ainda sem decisão final)
+const ESTADOS_EM_PROCESSO    = [1, 2, 3, 4];
+
+// Devolve os IDs de badge_regular da Service Line, opcionalmente filtrados por nome de nível
+async function getIdsBadgesSL(idServiceLine, nivelNome) {
+  const badges = await BadgeRegular.findAll({ where: { idServiceLine } });
+  if (!nivelNome) return badges.map(b => b.idBadgeRegular);
+  const niveis = await Nivel.findAll({ where: { nomeNivel: nivelNome } });
+  const idsNiveis = niveis.map(n => n.idNivel);
+  return badges.filter(b => idsNiveis.includes(b.idNivel)).map(b => b.idBadgeRegular);
+}
 
 // ═══════════════════════════════════════════════════════
 // DASHBOARD
@@ -424,15 +436,46 @@ exports.getConsultores = async (req, res) => {
     }
 
     const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
-    const consultores = await Consultor.findAll({ where: { idArea: { [Op.in]: areas.map(a => a.idArea) } } });
+    const idsAreas = areas.map(a => a.idArea);
+    const areasMap = {};
+    areas.forEach(a => { areasMap[a.idArea] = a.nomeArea; });
+
+    const serviceLine = await ServiceLine.findOne({ where: { idServiceLine: slLeader.idServiceLine } });
+    const consultores = await Consultor.findAll({ where: { idArea: { [Op.in]: idsAreas } } });
 
     const resultado = await Promise.all(consultores.map(async (c) => {
-      const u           = await Utilizador.findOne({ where: { idUtilizador: c.idUtilizador } });
-      const area        = await Area.findOne({ where: { idArea: c.idArea } });
-      const totalBadges = await BadgeUtilizador.count({ where: { idUtilizador: c.idUtilizador } });
-      const pontuacoes  = await Pontuacao.findAll({ where: { idUtilizador: c.idUtilizador } });
+      const u = await Utilizador.findOne({ where: { idUtilizador: c.idUtilizador } });
+
+      const badgesUtilizador = await BadgeUtilizador.findAll({ where: { idUtilizador: c.idUtilizador } });
+      const totalBadges = badgesUtilizador.length;
+
+      const candidaturas = await Candidatura.findAll({ where: { idCandidato: c.idUtilizador } });
+      const badgesEmProcesso = candidaturas.filter(cand => ESTADOS_EM_PROCESSO.includes(cand.idEstadoAtual)).length;
+
+      const pontuacoes = await Pontuacao.findAll({ where: { idUtilizador: c.idUtilizador } });
       const totalPontos = pontuacoes.reduce((acc, p) => acc + (p.qtPontos || 0), 0);
-      return { idUtilizador: c.idUtilizador, nome: u?.nomeUtilizador ?? '-', email: u?.email ?? '-', nomeArea: area?.nomeArea ?? '-', totalBadges, totalPontos };
+
+      // Última atividade = mais recente entre badges atribuídos, candidaturas criadas e último login
+      const datas = [
+        ...badgesUtilizador.map(b => b.dataAtribuicao),
+        ...candidaturas.map(cand => cand.dataCriacao),
+        u?.ultimoLogin,
+      ].filter(Boolean).map(d => new Date(d));
+      const ultimaAtividade = datas.length > 0 ? new Date(Math.max(...datas)) : null;
+
+      return {
+        idUtilizador: c.idUtilizador,
+        nome: u?.nomeUtilizador ?? '-',
+        email: u?.email ?? '-',
+        urlFoto: u?.urlFoto ?? null,
+        idArea: c.idArea,
+        nomeArea: areasMap[c.idArea] ?? '-',
+        nomeServiceLine: serviceLine?.nomeSl ?? '-',
+        totalBadges,
+        badgesEmProcesso,
+        totalPontos,
+        ultimaAtividade,
+      };
     }));
 
     resultado.sort((a, b) => b.totalPontos - a.totalPontos);
@@ -444,6 +487,139 @@ exports.getConsultores = async (req, res) => {
 };
 
 exports.getRanking = exports.getConsultores;
+
+// ═══════════════════════════════════════════════════════
+// PERFIL DE CONSULTOR (detalhe)
+// ═══════════════════════════════════════════════════════
+
+exports.getConsultorDetalhe = async (req, res) => {
+  try {
+    const idUtilizador = parseInt(req.params.id, 10);
+    if (Number.isNaN(idUtilizador)) return res.status(400).json({ error: 'Id inválido.' });
+
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    if (!slLeader) return res.status(404).json({ error: 'SL Leader não encontrado.' });
+
+    const areasSL = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+    const idsAreasSL = areasSL.map(a => a.idArea);
+
+    const consultor = await Consultor.findOne({ where: { idUtilizador } });
+    if (!consultor || !idsAreasSL.includes(consultor.idArea)) {
+      return res.status(404).json({ error: 'Consultor não encontrado nesta Service Line.' });
+    }
+
+    const u            = await Utilizador.findOne({ where: { idUtilizador } });
+    const area          = await Area.findOne({ where: { idArea: consultor.idArea } });
+    const serviceLine   = await ServiceLine.findOne({ where: { idServiceLine: slLeader.idServiceLine } });
+
+    // Mapa de estados (para não repetir queries)
+    const todosEstados = await EstadosCandidatura.findAll();
+    const estadosMap = {};
+    todosEstados.forEach(e => { estadosMap[e.idEstado] = e.nomeEstado; });
+
+    // Badges obtidos (regulares) e badges especiais — vêm ambos de badge_utilizador
+    const badgesUtilizador = await BadgeUtilizador.findAll({
+      where: { idUtilizador },
+      order: [['dataAtribuicao', 'DESC']],
+    });
+
+    const badgesObtidos = [];
+    const badgesEspeciais = [];
+    for (const bu of badgesUtilizador) {
+      if (bu.idBadgeRegular) {
+        const badge    = await BadgeRegular.findOne({ where: { idBadgeRegular: bu.idBadgeRegular } });
+        const nivel    = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+        const areaBadge = badge?.idArea ? await Area.findOne({ where: { idArea: badge.idArea } }) : null;
+        badgesObtidos.push({
+          idBadgeUtilizador: bu.idBadgeUtilizador,
+          nomeBadge: badge?.nomeBadge ?? '-',
+          nomeArea: areaBadge?.nomeArea ?? area?.nomeArea ?? '-',
+          nomeNivel: nivel?.nomeNivel ?? '-',
+          pontos: badge?.pontos ?? 0,
+          dataAtribuicao: bu.dataAtribuicao,
+          dataExpiracao: bu.dataExpiracao,
+          valido: !!bu.valido,
+        });
+      } else if (bu.idBadgeEspecial) {
+        const be = await BadgeEspecial.findOne({ where: { idBadgeEspecial: bu.idBadgeEspecial } });
+        badgesEspeciais.push({
+          idBadgeUtilizador: bu.idBadgeUtilizador,
+          nomeBadgeEspecial: be?.nomeBadgeEspecial ?? '-',
+          pontos: be?.pontos ?? 0,
+          dataAtribuicao: bu.dataAtribuicao,
+          dataExpiracao: bu.dataExpiracao,
+        });
+      }
+    }
+
+    // Candidaturas — badges em progresso + histórico completo
+    const candidaturas = await Candidatura.findAll({
+      where: { idCandidato: idUtilizador, idEstadoAtual: { [Op.ne]: ESTADO_RASCUNHO } },
+      order: [['dataCriacao', 'DESC']],
+    });
+
+    const badgesEmProgresso = [];
+    const historico = [];
+
+    for (const cand of candidaturas) {
+      const badge = await BadgeRegular.findOne({ where: { idBadgeRegular: cand.idBadgeRegular } });
+      const nivel = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+
+      if (ESTADOS_EM_PROCESSO.includes(cand.idEstadoAtual)) {
+        badgesEmProgresso.push({
+          numCandidatura: cand.numCandidatura,
+          nomeBadge: badge?.nomeBadge ?? '-',
+          nomeNivel: nivel?.nomeNivel ?? '-',
+          nomeEstado: estadosMap[cand.idEstadoAtual] ?? '-',
+          dataCriacao: cand.dataCriacao,
+        });
+      }
+
+      const historicosCand = await HistoricoCandidatura.findAll({
+        where: { numCandidatura: cand.numCandidatura },
+        order: [['dataAlteracao', 'ASC']],
+      });
+      historicosCand.forEach(h => {
+        historico.push({
+          data: h.dataAlteracao,
+          nomeBadge: badge?.nomeBadge ?? '-',
+          nomeEstado: estadosMap[h.idEstadoAtual] ?? '-',
+          comentario: h.comentario ?? null,
+        });
+      });
+    }
+    historico.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    const pontuacoes  = await Pontuacao.findAll({ where: { idUtilizador } });
+    const totalPontos = pontuacoes.reduce((acc, p) => acc + (p.qtPontos || 0), 0);
+
+    // Timeline de evolução profissional — conquistas ordenadas cronologicamente
+    const evolucao = [
+      ...badgesObtidos.map(b => ({ data: b.dataAtribuicao, titulo: `Conquista ${b.nomeBadge}` })),
+      ...badgesEspeciais.map(b => ({ data: b.dataAtribuicao, titulo: `Conquista Badge Especial: ${b.nomeBadgeEspecial}` })),
+    ].filter(e => e.data).sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    return res.json({
+      idUtilizador,
+      nome: u?.nomeUtilizador ?? '-',
+      email: u?.email ?? '-',
+      telefone: u?.telefone ?? null,
+      urlFoto: u?.urlFoto ?? null,
+      urlLinkedin: u?.urlLinkedin ?? null,
+      nomeArea: area?.nomeArea ?? '-',
+      nomeServiceLine: serviceLine?.nomeSl ?? '-',
+      badgesObtidos,
+      badgesEmProgresso,
+      badgesEspeciais,
+      historico,
+      evolucao,
+      totalPontos,
+    });
+  } catch (err) {
+    console.error('[sl] getConsultorDetalhe:', err.message);
+    return res.status(500).json({ error: 'Erro ao carregar perfil do consultor.' });
+  }
+};
 
 exports.getNotificacoes = async (req, res) => {
   try {
@@ -464,23 +640,35 @@ exports.getRelatorioKpis = async (req, res) => {
   try {
     const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
     const idServiceLine = slLeader.idServiceLine;
-    const badges = await BadgeRegular.findAll({ where: { idServiceLine } });
-    const idsBadges = badges.map(b => b.idBadgeRegular);
+    const idsBadges = await getIdsBadgesSL(idServiceLine);
 
-    const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+    const inicioMesAtual = new Date(); inicioMesAtual.setDate(1); inicioMesAtual.setHours(0, 0, 0, 0);
+    const inicioMesAnterior = new Date(inicioMesAtual); inicioMesAnterior.setMonth(inicioMesAnterior.getMonth() - 1);
 
-    // Badges aprovados este mês
-    const aprovadosIds = (await HistoricoCandidatura.findAll({
-      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMes } },
-    })).map(h => h.numCandidatura);
-    const badgesAprovados = aprovadosIds.length > 0
-      ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: aprovadosIds }, idBadgeRegular: { [Op.in]: idsBadges } } })
-      : 0;
+    // Badges aprovados este mês vs mês anterior (para a variação %)
+    const historicosAprovMes = await HistoricoCandidatura.findAll({
+      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMesAtual } },
+    });
+    const historicosAprovMesAnt = await HistoricoCandidatura.findAll({
+      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMesAnterior, [Op.lt]: inicioMesAtual } },
+    });
+    const numsAprovMes    = historicosAprovMes.map(h => h.numCandidatura);
+    const numsAprovMesAnt = historicosAprovMesAnt.map(h => h.numCandidatura);
 
-    // Total candidaturas da SL
-    const totalCand = idsBadges.length > 0
-      ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
-    const taxaAprovacao = totalCand > 0 ? Math.round((badgesAprovados / totalCand) * 100) : 0;
+    const badgesAprovados = numsAprovMes.length > 0
+      ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: numsAprovMes }, idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
+    const badgesAprovadosMesAnt = numsAprovMesAnt.length > 0
+      ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: numsAprovMesAnt }, idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
+
+    const badgesAprovadosVariacao = badgesAprovadosMesAnt > 0
+      ? Math.round(((badgesAprovados - badgesAprovadosMesAnt) / badgesAprovadosMesAnt) * 100)
+      : (badgesAprovados > 0 ? 100 : 0);
+
+    // Taxa de aprovação — sobre candidaturas já decididas (aprovadas + rejeitadas)
+    const totalAprovadas  = idsBadges.length > 0 ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA } }) : 0;
+    const totalRejeitadas = idsBadges.length > 0 ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_REJEITADA } }) : 0;
+    const totalDecididas  = totalAprovadas + totalRejeitadas;
+    const taxaAprovacao   = totalDecididas > 0 ? Math.round((totalAprovadas / totalDecididas) * 100) : 0;
 
     // Consultores com pelo menos 1 badge
     const areas = await Area.findAll({ where: { idServiceLine } });
@@ -491,7 +679,36 @@ exports.getRelatorioKpis = async (req, res) => {
       if (total > 0) consultoresComBadge++;
     }
 
-    return res.json({ badgesAprovados, taxaAprovacao, consultoresComBadge, mediaSLA: 48 });
+    // Média de SLA (horas entre submissão e aprovação) — global e comparação semanal
+    const candidaturasAprovadas = idsBadges.length > 0
+      ? await Candidatura.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA } }) : [];
+
+    let somaHoras = 0, contagem = 0;
+    let somaSemanaAtual = 0, contSemanaAtual = 0;
+    let somaSemanaAnt = 0, contSemanaAnt = 0;
+    const inicioSemanaAtual = new Date(); inicioSemanaAtual.setDate(inicioSemanaAtual.getDate() - 7);
+    const inicioSemanaAnt   = new Date(); inicioSemanaAnt.setDate(inicioSemanaAnt.getDate() - 14);
+
+    for (const c of candidaturasAprovadas) {
+      const historicos = await HistoricoCandidatura.findAll({ where: { numCandidatura: c.numCandidatura }, order: [['dataAlteracao', 'ASC']] });
+      const submissao = historicos.find(h => h.idEstadoAtual === 1);
+      const aprovacao = historicos.find(h => h.idEstadoAtual === ESTADO_APROVADA);
+      if (submissao && aprovacao) {
+        const horas = (new Date(aprovacao.dataAlteracao) - new Date(submissao.dataAlteracao)) / (1000 * 60 * 60);
+        somaHoras += horas; contagem++;
+        const dataAprov = new Date(aprovacao.dataAlteracao);
+        if (dataAprov >= inicioSemanaAtual) { somaSemanaAtual += horas; contSemanaAtual++; }
+        else if (dataAprov >= inicioSemanaAnt) { somaSemanaAnt += horas; contSemanaAnt++; }
+      }
+    }
+
+    const mediaSLA = contagem > 0 ? Math.round(somaHoras / contagem) : 0;
+    const mediaSemanaAtual = contSemanaAtual > 0 ? somaSemanaAtual / contSemanaAtual : null;
+    const mediaSemanaAnt   = contSemanaAnt > 0 ? somaSemanaAnt / contSemanaAnt : null;
+    const mediaSLAVariacao = (mediaSemanaAtual !== null && mediaSemanaAnt !== null)
+      ? Math.round(mediaSemanaAtual - mediaSemanaAnt) : 0;
+
+    return res.json({ badgesAprovados, badgesAprovadosVariacao, taxaAprovacao, consultoresComBadge, mediaSLA, mediaSLAVariacao });
   } catch (err) {
     console.error('[sl] getRelatorioKpis:', err.message);
     return res.status(500).json({ error: 'Erro ao carregar KPIs.' });
@@ -501,24 +718,25 @@ exports.getRelatorioKpis = async (req, res) => {
 exports.getEvolucaoMensal = async (req, res) => {
   try {
     const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
-    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
-    const idsBadges = badges.map(b => b.idBadgeRegular);
+    const idsBadges = await getIdsBadgesSL(slLeader.idServiceLine, req.query.nivel);
     if (idsBadges.length === 0) return res.json([]);
 
     const candidaturas = await Candidatura.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges } } });
     const numsCand = candidaturas.map(c => c.numCandidatura);
     if (numsCand.length === 0) return res.json([]);
 
-    const oitoAtras = new Date(); oitoAtras.setMonth(oitoAtras.getMonth() - 8);
+    const inicio = req.query.dataInicio ? new Date(req.query.dataInicio) : (() => { const d = new Date(); d.setMonth(d.getMonth() - 8); return d; })();
+    const fim    = req.query.dataFim ? new Date(req.query.dataFim + 'T23:59:59') : new Date();
+
     const historicos = await HistoricoCandidatura.findAll({
-      where: { numCandidatura: { [Op.in]: numsCand }, idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: oitoAtras } },
+      where: { numCandidatura: { [Op.in]: numsCand }, idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicio, [Op.lte]: fim } },
       order: [['dataAlteracao', 'ASC']],
     });
 
+    const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const porMes = {};
     historicos.forEach(h => {
       const d = new Date(h.dataAlteracao);
-      const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const chave = meses[d.getMonth()];
       porMes[chave] = (porMes[chave] || 0) + 1;
     });
@@ -537,7 +755,11 @@ exports.getBadgesPorNivel = async (req, res) => {
     const idsBadges = badges.map(b => b.idBadgeRegular);
     if (idsBadges.length === 0) return res.json([]);
 
-    const atribuidos = await BadgeUtilizador.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges } } });
+    const where = { idBadgeRegular: { [Op.in]: idsBadges } };
+    if (req.query.dataInicio) where.dataAtribuicao = { ...where.dataAtribuicao, [Op.gte]: new Date(req.query.dataInicio) };
+    if (req.query.dataFim)    where.dataAtribuicao = { ...where.dataAtribuicao, [Op.lte]: new Date(req.query.dataFim + 'T23:59:59') };
+
+    const atribuidos = await BadgeUtilizador.findAll({ where });
     const porNivel = {};
     for (const bu of atribuidos) {
       const badge = badges.find(b => b.idBadgeRegular === bu.idBadgeRegular);
@@ -560,17 +782,39 @@ exports.getBadgesPorArea = async (req, res) => {
     const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
     const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
 
+    const inicioMesAtual = new Date(); inicioMesAtual.setDate(1); inicioMesAtual.setHours(0, 0, 0, 0);
+    const inicioMesAnterior = new Date(inicioMesAtual); inicioMesAnterior.setMonth(inicioMesAnterior.getMonth() - 1);
+    const labelMesAtual    = `${String(inicioMesAtual.getMonth() + 1).padStart(2, '0')}/${String(inicioMesAtual.getFullYear()).slice(-2)}`;
+    const labelMesAnterior = `${String(inicioMesAnterior.getMonth() + 1).padStart(2, '0')}/${String(inicioMesAnterior.getFullYear()).slice(-2)}`;
+
+    // Aprovações do mês atual e do mês anterior (calculadas uma única vez)
+    const historicosMesAtual = await HistoricoCandidatura.findAll({
+      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMesAtual } },
+    });
+    const historicosMesAnterior = await HistoricoCandidatura.findAll({
+      where: { idEstadoAtual: ESTADO_APROVADA, dataAlteracao: { [Op.gte]: inicioMesAnterior, [Op.lt]: inicioMesAtual } },
+    });
+    const numsMesAtual    = historicosMesAtual.map(h => h.numCandidatura);
+    const numsMesAnterior = historicosMesAnterior.map(h => h.numCandidatura);
+
+    const niveis = req.query.nivel ? await Nivel.findAll({ where: { nomeNivel: req.query.nivel } }) : null;
+    const idsNiveis = niveis ? niveis.map(n => n.idNivel) : null;
+
     const resultado = await Promise.all(areas.map(async (a) => {
-      const badgesArea = await BadgeRegular.findAll({ where: { idArea: a.idArea } });
+      let badgesArea = await BadgeRegular.findAll({ where: { idArea: a.idArea } });
+      if (idsNiveis) badgesArea = badgesArea.filter(b => idsNiveis.includes(b.idNivel));
       const idsBadges = badgesArea.map(b => b.idBadgeRegular);
-      const aprovados = idsBadges.length > 0
-        ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA } }) : 0;
-      const emProcesso = idsBadges.length > 0
-        ? await Candidatura.count({ where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: { [Op.in]: [1,2,3] } } }) : 0;
-      return { nome: a.nomeArea, aprovados, emProcesso };
+      if (idsBadges.length === 0) return { nome: a.nomeArea, mesAnterior: 0, mesAtual: 0 };
+
+      const mesAtual = numsMesAtual.length > 0
+        ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: numsMesAtual }, idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
+      const mesAnterior = numsMesAnterior.length > 0
+        ? await Candidatura.count({ where: { numCandidatura: { [Op.in]: numsMesAnterior }, idBadgeRegular: { [Op.in]: idsBadges } } }) : 0;
+
+      return { nome: a.nomeArea, mesAnterior, mesAtual };
     }));
 
-    return res.json(resultado);
+    return res.json({ labelMesAnterior, labelMesAtual, areas: resultado });
   } catch (err) {
     console.error('[sl] getBadgesPorArea:', err.message);
     return res.status(500).json({ error: 'Erro.' });
@@ -580,13 +824,14 @@ exports.getBadgesPorArea = async (req, res) => {
 exports.getCumprimentoSLA = async (req, res) => {
   try {
     const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
-    const badges = await BadgeRegular.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
-    const idsBadges = badges.map(b => b.idBadgeRegular);
+    const idsBadges = await getIdsBadgesSL(slLeader.idServiceLine, req.query.nivel);
     if (idsBadges.length === 0) return res.json({ percentagem: 0 });
 
-    const candidaturas = await Candidatura.findAll({
-      where: { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA },
-    });
+    const where = { idBadgeRegular: { [Op.in]: idsBadges }, idEstadoAtual: ESTADO_APROVADA };
+    if (req.query.dataInicio) where.dataCriacao = { ...where.dataCriacao, [Op.gte]: new Date(req.query.dataInicio) };
+    if (req.query.dataFim)    where.dataCriacao = { ...where.dataCriacao, [Op.lte]: new Date(req.query.dataFim + 'T23:59:59') };
+
+    const candidaturas = await Candidatura.findAll({ where });
 
     let dentroPrazo = 0;
     for (const c of candidaturas) {
@@ -723,6 +968,47 @@ exports.exportarConsultores = async (req, res) => {
   } catch (err) {
     console.error('[sl] exportarConsultores:', err.message);
     return res.status(500).json({ error: 'Erro ao exportar consultores.' });
+  }
+};
+
+// Validações realizadas pelo próprio SL Leader (aprovações + rejeições)
+exports.exportarValidacoes = async (req, res) => {
+  try {
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    const idsBadges = await getIdsBadgesSL(slLeader.idServiceLine);
+    if (idsBadges.length === 0) return res.json([]);
+
+    const candidaturas = await Candidatura.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadges } } });
+    const numsCand = candidaturas.map(c => c.numCandidatura);
+    if (numsCand.length === 0) return res.json([]);
+
+    const historicos = await HistoricoCandidatura.findAll({
+      where: { numCandidatura: { [Op.in]: numsCand }, tipoResponsavel: 'sl_leader' },
+      order: [['dataAlteracao', 'DESC']],
+    });
+
+    const resultado = await Promise.all(historicos.map(async (h) => {
+      const cand      = candidaturas.find(c => c.numCandidatura === h.numCandidatura);
+      const candidato = cand ? await Utilizador.findOne({ where: { idUtilizador: cand.idCandidato } }) : null;
+      const badge     = cand ? await BadgeRegular.findOne({ where: { idBadgeRegular: cand.idBadgeRegular } }) : null;
+      const responsavel = h.idResponsavel ? await Utilizador.findOne({ where: { idUtilizador: h.idResponsavel } }) : null;
+      const estado    = await EstadosCandidatura.findOne({ where: { idEstado: h.idEstadoAtual } });
+
+      return {
+        numCandidatura: h.numCandidatura,
+        nomeConsultor: candidato?.nomeUtilizador ?? '-',
+        nomeBadge: badge?.nomeBadge ?? '-',
+        nomeEstado: estado?.nomeEstado ?? '-',
+        dataValidacao: h.dataAlteracao,
+        responsavel: responsavel?.nomeUtilizador ?? '-',
+        comentario: h.comentario ?? '-',
+      };
+    }));
+
+    return res.json(resultado);
+  } catch (err) {
+    console.error('[sl] exportarValidacoes:', err.message);
+    return res.status(500).json({ error: 'Erro ao exportar validações.' });
   }
 };
 

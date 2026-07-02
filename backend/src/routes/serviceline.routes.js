@@ -29,6 +29,7 @@ router.get('/badges/:id/requisitos', sl.getRequisitosBadge);
 
 // —— CONSULTORES / RANKING ——
 router.get('/consultores',         sl.getConsultores);
+router.get('/consultores/:id',     sl.getConsultorDetalhe);
 router.get('/ranking',             sl.getRanking);
 router.get('/gamification/todos' , gamificationController.getRankingGlobal);
 
@@ -44,6 +45,7 @@ router.get('/relatorios/exportar-pedidos',    sl.exportarPedidos);
 router.get('/relatorios/exportar-badges',     sl.exportarBadges);
 router.get('/relatorios/exportar-consultores', sl.exportarConsultores);
 router.get('/relatorios/exportar-aprovacoes', sl.exportarAprovacoes);
+router.get('/relatorios/exportar-validacoes', sl.exportarValidacoes);
 
 // —— NOTIFICAÇÕES ——
 router.get('/notificacoes',        sl.getNotificacoes);

@@ -295,7 +295,6 @@ barras
   width: 200px;
   height: calc(100vh - 60px);
   background: var(--cor-fundo);
-  border-right: 1px solid var(--cor-borda);
   display: flex;
   flex-direction: column;
   justify-content: space-between;

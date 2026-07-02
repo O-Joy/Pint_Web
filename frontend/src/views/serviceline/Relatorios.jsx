@@ -1,259 +1,427 @@
 // src/views/serviceline/Relatorios.jsx
-// Página de Relatórios do Service Line Leader
-// Requisitos 10-14 do enunciado: candidaturas, badges, consultores, aprovações — com filtros e exportação Excel/PDF
+// Página de Relatórios do Service Line Leader — KPIs, gráficos e exportação de dados.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
-import { FiDownload, FiFilter } from 'react-icons/fi'
+import { FiDownload, FiCalendar } from 'react-icons/fi'
+import { MdMilitaryTech, MdPerson, MdStars, MdAccessTime } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { Line, Pie, Doughnut, Bar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, BarElement,
+  PointElement, LineElement, ArcElement, Filler, Tooltip, Legend,
+} from 'chart.js'
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Filler, Tooltip, Legend)
 
-const TABS = [
-  { id: 'candidaturas', label: 'Pedidos' },
-  { id: 'badges',       label: 'Badges Atribuídos' },
-  { id: 'consultores',  label: 'Consultores' },
-  { id: 'aprovacoes',   label: 'Aprovações' },
+const NIVEIS = ['Todos', 'Júnior', 'Intermédio', 'Sénior', 'Especialista', 'Líder de Conhecimento']
+
+const GRAFICO_TABS = [
+  { id: 'evolucao', label: 'Evolução' },
+  { id: 'area',     label: 'Por Área' },
+  { id: 'nivelsla', label: 'Por Nível/SLA' },
 ]
 
-const ESTADOS = [
-  { id: '', label: 'Todos os estados' },
-  { id: '1', label: 'Submetido' },
-  { id: '2', label: 'Em Validação TM' },
-  { id: '3', label: 'Em Validação SLL' },
-  { id: '4', label: 'Em Retificação' },
-  { id: '5', label: 'Aprovada' },
-  { id: '6', label: 'Rejeitada' },
-]
-
-const corEstado = {
-  'Aprovada':          { bg: '#dcfce7', color: '#16a34a' },
-  'Rejeitada':         { bg: '#fee2e2', color: '#dc2626' },
-  'Em Validação SLL':  { bg: '#dbeafe', color: '#1d4ed8' },
-  'Em Validação TM':   { bg: '#e0e7ff', color: '#4338ca' },
-  'Em Retificação SLL':{ bg: '#fef3c7', color: '#d97706' },
-  'Submetido':         { bg: '#f3f4f6', color: '#6b7280' },
-}
+const CORES_AREA = ['#7dd8f0', '#7eecd4']
 
 export default function Relatorios() {
-  const [tab, setTab]           = useState('candidaturas')
-  const [dados, setDados]       = useState([])
-  const [loading, setLoading]   = useState(false)
+  const [kpis, setKpis] = useState({ badgesAprovados: 0, badgesAprovadosVariacao: 0, taxaAprovacao: 0, consultoresComBadge: 0, mediaSLA: 0, mediaSLAVariacao: 0 })
+  const [evolucao, setEvolucao] = useState([])
+  const [porArea, setPorArea] = useState({ labelMesAnterior: '', labelMesAtual: '', areas: [] })
+  const [porNivel, setPorNivel] = useState([])
+  const [sla, setSla] = useState({ percentagem: 0 })
+
+  const [grafico, setGrafico] = useState('evolucao')
   const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim]       = useState('')
-  const [estado, setEstado]         = useState('')
-  const [filtro, setFiltro]         = useState('')
+  const [dataFim, setDataFim] = useState('')
+  const [nivel, setNivel] = useState('Todos')
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => { carregar() }, [tab])
-
-  function carregar() {
+  const carregar = useCallback(() => {
     setLoading(true)
-    setDados([])
     const params = new URLSearchParams()
     if (dataInicio) params.append('dataInicio', dataInicio)
     if (dataFim)    params.append('dataFim', dataFim)
-    if (estado)     params.append('estado', estado)
+    if (nivel && nivel !== 'Todos') params.append('nivel', nivel)
+    const qs = params.toString()
 
-    const endpoint = tab === 'candidaturas' ? `/sl/relatorios/candidaturas?${params}`
-      : tab === 'badges'      ? '/sl/relatorios/exportar-badges'
-      : tab === 'consultores' ? '/sl/relatorios/exportar-consultores'
-      : '/sl/relatorios/exportar-aprovacoes'
-
-    api.get(endpoint)
-      .then(res => setDados(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setDados([]))
+    Promise.all([
+      api.get('/sl/relatorios/kpis'),
+      api.get(`/sl/relatorios/evolucao-mensal?${qs}`),
+      api.get(`/sl/relatorios/por-area?${qs}`),
+      api.get(`/sl/relatorios/por-nivel?${qs}`),
+      api.get(`/sl/relatorios/sla?${qs}`),
+    ]).then(([kpisRes, evolRes, areaRes, nivelRes, slaRes]) => {
+      setKpis(kpisRes.data || {})
+      setEvolucao(Array.isArray(evolRes.data) ? evolRes.data : [])
+      setPorArea(areaRes.data && areaRes.data.areas ? areaRes.data : { labelMesAnterior: '', labelMesAtual: '', areas: [] })
+      setPorNivel(Array.isArray(nivelRes.data) ? nivelRes.data : [])
+      setSla(slaRes.data || { percentagem: 0 })
+    }).catch(err => console.error('[Relatorios] ERRO:', err.response?.status, err.response?.data || err.message))
       .finally(() => setLoading(false))
+  }, [dataInicio, dataFim, nivel])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  // ── Exportação genérica de um endpoint de dados (Excel/PDF) ──
+  function exportarDados(endpoint, nomeFicheiro, colunas, getCelulas, formato) {
+    api.get(endpoint).then(res => {
+      const dados = Array.isArray(res.data) ? res.data : []
+      if (formato === 'excel') {
+        const linhas = dados.map(d => Object.fromEntries(colunas.map((c, i) => [c, getCelulas(d)[i]])))
+        const ws = XLSX.utils.json_to_sheet(linhas)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, nomeFicheiro)
+        XLSX.writeFile(wb, `${nomeFicheiro}.xlsx`)
+      } else {
+        const doc = new jsPDF()
+        doc.setFontSize(14)
+        doc.text(nomeFicheiro.replace(/_/g, ' '), 14, 16)
+        autoTable(doc, {
+          startY: 22,
+          head: [colunas],
+          body: dados.map(d => getCelulas(d)),
+          headStyles: { fillColor: [57, 99, 156] },
+          styles: { fontSize: 9 },
+        })
+        doc.save(`${nomeFicheiro}.pdf`)
+      }
+    }).catch(err => console.error('[Relatorios] exportar:', err.response?.data || err.message))
   }
 
-  // Filtragem local por texto
-  const dadosFiltrados = dados.filter(d => {
-    const termo = filtro.toLowerCase()
-    return Object.values(d).some(v => String(v).toLowerCase().includes(termo))
-  })
-
-  // ── Configuração das colunas por tab ──
-  const colunas = {
-    candidaturas: ['ID', 'Consultor', 'Badge', 'Nível', 'Área', 'Estado', 'Data'],
-    badges:       ['ID', 'Consultor', 'Badge', 'Nível', 'Área', 'Data Atribuição', 'Válido'],
-    consultores:  ['Nome', 'Email', 'Área', 'Badges', 'Pontos'],
-    aprovacoes:   ['ID', 'Consultor', 'Badge', 'Nível', 'Data Aprovação', 'Comentário'],
+  const EXPORTACOES = {
+    badges: {
+      titulo: 'BADGES', endpoint: '/sl/relatorios/exportar-badges', ficheiro: 'badges_atribuidos',
+      colunas: ['Consultor', 'Badge', 'Nível', 'Área', 'Data Atribuição', 'Válido'],
+      celulas: d => [d.nomeConsultor, d.nomeBadge, d.nomeNivel, d.nomeArea, new Date(d.dataAtribuicao).toLocaleDateString('pt-PT'), d.valido],
+    },
+    pedidos: {
+      titulo: 'PEDIDOS', endpoint: '/sl/relatorios/exportar-pedidos', ficheiro: 'pedidos',
+      colunas: ['Consultor', 'Badge', 'Nível', 'Área', 'Estado', 'Data'],
+      celulas: d => [d.nomeConsultor, d.nomeBadge, d.nomeNivel, d.nomeArea, d.nomeEstado, new Date(d.dataCriacao).toLocaleDateString('pt-PT')],
+    },
+    consultores: {
+      titulo: 'CONSULTORES', endpoint: '/sl/relatorios/exportar-consultores', ficheiro: 'consultores',
+      colunas: ['Nome', 'Email', 'Área', 'Badges', 'Pontos'],
+      celulas: d => [d.nome, d.email, d.nomeArea, d.totalBadges, d.totalPontos],
+    },
+    validacoes: {
+      titulo: 'VALIDAÇÕES', endpoint: '/sl/relatorios/exportar-validacoes', ficheiro: 'validacoes',
+      colunas: ['Consultor', 'Badge', 'Estado', 'Data', 'Responsável', 'Comentário'],
+      celulas: d => [d.nomeConsultor, d.nomeBadge, d.nomeEstado, new Date(d.dataValidacao).toLocaleDateString('pt-PT'), d.responsavel, d.comentario],
+    },
   }
 
-  function getCelulas(d) {
-    if (tab === 'candidaturas') return [
-      d.numCandidatura,
-      d.nomeConsultor,
-      d.nomeBadge,
-      d.nomeNivel,
-      d.nomeArea,
-      d.nomeEstado,
-      new Date(d.dataCriacao).toLocaleDateString('pt-PT'),
-    ]
-    if (tab === 'badges') return [
-      d.idBadgeUtilizador,
-      d.nomeConsultor,
-      d.nomeBadge,
-      d.nomeNivel,
-      d.nomeArea,
-      new Date(d.dataAtribuicao).toLocaleDateString('pt-PT'),
-      d.valido,
-    ]
-    if (tab === 'consultores') return [d.nome, d.email, d.nomeArea, d.totalBadges, d.totalPontos]
-    if (tab === 'aprovacoes') return [
-      d.numCandidatura,
-      d.nomeConsultor,
-      d.nomeBadge,
-      d.nomeNivel,
-      new Date(d.dataAprovacao).toLocaleDateString('pt-PT'),
-      d.comentario,
-    ]
-    return []
-  }
-
-  // ── Exportações ──
-  function exportarExcel() {
-    const cabecalho = colunas[tab]
-    const linhas = dadosFiltrados.map(d => {
-      const celulas = getCelulas(d)
-      return Object.fromEntries(cabecalho.map((c, i) => [c, celulas[i]]))
+  // ── Exportar Relatório Anterior — snapshot em PDF do mês passado ──
+  function exportarRelatorioAnterior() {
+    const hoje = new Date()
+    const inicioMesAnt = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
+    const fimMesAnt = new Date(hoje.getFullYear(), hoje.getMonth(), 0)
+    const params = new URLSearchParams({
+      dataInicio: inicioMesAnt.toISOString().slice(0, 10),
+      dataFim: fimMesAnt.toISOString().slice(0, 10),
     })
-    const ws = XLSX.utils.json_to_sheet(linhas)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, tab)
-    XLSX.writeFile(wb, `relatorio_${tab}.xlsx`)
+    api.get(`/sl/relatorios/candidaturas?${params}`).then(res => {
+      const dados = Array.isArray(res.data) ? res.data : []
+      const doc = new jsPDF()
+      doc.setFontSize(16)
+      doc.text('Relatório do Mês Anterior', 14, 15)
+      doc.setFontSize(10)
+      doc.text(`${inicioMesAnt.toLocaleDateString('pt-PT')} — ${fimMesAnt.toLocaleDateString('pt-PT')}`, 14, 22)
+      autoTable(doc, {
+        startY: 30,
+        head: [['Consultor', 'Badge', 'Nível', 'Área', 'Estado', 'Data']],
+        body: dados.map(d => [d.nomeConsultor, d.nomeBadge, d.nomeNivel, d.nomeArea, d.nomeEstado, new Date(d.dataCriacao).toLocaleDateString('pt-PT')]),
+        headStyles: { fillColor: [57, 99, 156] },
+        styles: { fontSize: 9 },
+      })
+      doc.save('relatorio_mes_anterior.pdf')
+    }).catch(err => console.error('[Relatorios] anterior:', err.response?.data || err.message))
   }
 
-  function exportarPDF() {
+  // ── "Gerar Relatório" por gráfico — exporta os dados subjacentes em PDF ──
+  function gerarRelatorioGrafico() {
     const doc = new jsPDF()
-    const titulo = TABS.find(t => t.id === tab)?.label ?? tab
     doc.setFontSize(14)
-    doc.text(`Relatório — ${titulo}`, 14, 16)
-    autoTable(doc, {
-      startY: 22,
-      head: [colunas[tab]],
-      body: dadosFiltrados.map(d => getCelulas(d)),
-      headStyles: { fillColor: [57, 99, 156] },
-      styles: { fontSize: 9 },
-    })
-    doc.save(`relatorio_${tab}.pdf`)
+    if (grafico === 'evolucao') {
+      doc.text('Evolução Mensal de Badges', 14, 16)
+      autoTable(doc, { startY: 22, head: [['Mês', 'Badges Atribuídos']], body: evolucao.map(e => [e.mes, e.total]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
+      doc.save('evolucao_mensal.pdf')
+    } else if (grafico === 'area') {
+      doc.text('Badges por Área', 14, 16)
+      autoTable(doc, {
+        startY: 22,
+        head: [['Área', porArea.labelMesAnterior, porArea.labelMesAtual]],
+        body: porArea.areas.map(a => [a.nome, a.mesAnterior, a.mesAtual]),
+        headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 },
+      })
+      doc.save('badges_por_area.pdf')
+    } else {
+      doc.text('Badges por Nível e Cumprimento de SLA', 14, 16)
+      autoTable(doc, { startY: 22, head: [['Nível', 'Badges', '%']], body: porNivel.map(n => [n.nome, n.count, `${n.percentagem}%`]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
+      doc.text(`Cumprimento de SLA: ${sla.percentagem}%`, 14, doc.lastAutoTable.finalY + 10)
+      doc.save('nivel_sla.pdf')
+    }
   }
+
+  const corVariacao = (v) => (v > 0 ? '#16a34a' : v < 0 ? '#dc2626' : '#9ca3af')
+  const KPI_CARDS = [
+    {
+      icon: <MdMilitaryTech />, valor: kpis.badgesAprovados, label: 'BADGES APROVADOS',
+      nota: `${kpis.badgesAprovadosVariacao > 0 ? '+' : ''}${kpis.badgesAprovadosVariacao}% este mês`,
+      corNota: corVariacao(kpis.badgesAprovadosVariacao),
+    },
+    { icon: <MdPerson />, valor: `${kpis.taxaAprovacao}%`, label: 'TAXA DE APROVAÇÃO', nota: null },
+    { icon: <MdStars />, valor: kpis.consultoresComBadge, label: 'CONSULTORES COM PELO MENOS 1 BADGE', nota: null },
+    {
+      icon: <MdAccessTime />, valor: kpis.mediaSLA, label: 'MÉDIA SLA (HORAS)',
+      nota: kpis.mediaSLAVariacao !== 0 ? `${kpis.mediaSLAVariacao > 0 ? '+' : ''}${kpis.mediaSLAVariacao}h esta semana` : null,
+      corNota: corVariacao(-kpis.mediaSLAVariacao),
+    },
+  ]
 
   return (
     <LayoutSL>
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
         {/* ── Cabeçalho ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
-          <div>
-            <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Relatórios</h2>
-            <p style={{ color: '#9ca3af', fontSize: 13, margin: '4px 0 0' }}>{dadosFiltrados.length} registos</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={exportarExcel} style={btnExport}>
-              <FiDownload style={{ marginRight: 5 }} /> Exportar Excel
-            </button>
-            <button onClick={exportarPDF} style={btnExport}>
-              <FiDownload style={{ marginRight: 5 }} /> Exportar PDF
-            </button>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+          <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Relatórios</h2>
+          <button onClick={exportarRelatorioAnterior} style={btnOutline}>
+            Exportar Relatório Anterior
+          </button>
         </div>
 
-        {/* ── Tabs ── */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => { setTab(t.id); setFiltro('') }} style={{
-              border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', transition: 'all 0.15s',
-              background: tab === t.id ? '#fff' : 'transparent',
-              color: tab === t.id ? '#39639C' : '#9ca3af',
-              boxShadow: tab === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+        {/* ── KPIs ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+          {KPI_CARDS.map((c, i) => (
+            <div key={i} style={{
+              background: '#fff', borderRadius: 14, padding: '18px 18px',
+              display: 'flex', alignItems: 'center', gap: 14,
+              boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0',
             }}>
-              {t.label}
-            </button>
+              <div style={{
+                width: 42, height: 42, borderRadius: 10, background: '#e8f0fb',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, color: '#39639C', flexShrink: 0,
+              }}>
+                {c.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{c.valor}</div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, fontWeight: 600, letterSpacing: 0.3 }}>{c.label}</div>
+                {c.nota && <div style={{ fontSize: 11, color: c.corNota, marginTop: 2, fontWeight: 600 }}>{c.nota}</div>}
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* ── Filtros ── */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input
-            value={filtro}
-            onChange={e => setFiltro(e.target.value)}
-            placeholder="Pesquisar..."
-            style={{ flex: 1, minWidth: 0, border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 13, boxShadow: '0 5px 40px rgba(237,237,237,1)', outline: 'none' }}
-          />
-
-          {tab === 'candidaturas' && (
-            <>
-              <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-                style={{ border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxShadow: '0 5px 40px rgba(237,237,237,1)', outline: 'none', color: dataInicio ? '#374151' : '#9ca3af' }} />
-              <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
-                style={{ border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxShadow: '0 5px 40px rgba(237,237,237,1)', outline: 'none', color: dataFim ? '#374151' : '#9ca3af' }} />
-              <select value={estado} onChange={e => setEstado(e.target.value)} style={{ border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, boxShadow: '0 5px 40px rgba(237,237,237,1)', outline: 'none', color: '#374151' }}>
-                {ESTADOS.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
-              </select>
-              <button onClick={carregar} style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <FiFilter /> Filtrar
+        {/* ── Tabs de gráfico + filtros ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+            {GRAFICO_TABS.map(t => (
+              <button key={t.id} onClick={() => setGrafico(t.id)} style={{
+                border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.3,
+                background: grafico === t.id ? '#fff' : 'transparent',
+                color: grafico === t.id ? '#39639C' : '#9ca3af',
+                boxShadow: grafico === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+              }}>
+                {t.label}
               </button>
-            </>
-          )}
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e5e7eb', borderRadius: 10, padding: '0 12px', background: '#fff' }}>
+              <FiCalendar style={{ color: '#aaa', flexShrink: 0 }} />
+              <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
+                style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
+              <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
+              <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
+                style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
+            </div>
+            <select value={nivel} onChange={e => setNivel(e.target.value)} style={{
+              border: '1px solid #e5e7eb', borderRadius: 10, padding: '9px 14px', fontSize: 12,
+              outline: 'none', color: '#555', background: '#fff',
+            }}>
+              {NIVEIS.map(n => <option key={n} value={n}>{n === 'Todos' ? 'Nível - Todos' : n}</option>)}
+            </select>
+          </div>
         </div>
 
-        {/* ── Tabela ── */}
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 5px 40px rgba(237,237,237,1)', overflowX: 'auto' }}>
-          {loading ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>A carregar...</div>
-          ) : dadosFiltrados.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>Sem dados disponíveis.</div>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f0f0f0' }}>
-                  {colunas[tab].map((col, i) => (
-                    <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#6b7280', fontSize: 12, whiteSpace: 'nowrap' }}>
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {dadosFiltrados.map((d, i) => {
-                  const celulas = getCelulas(d)
-                  return (
-                    <tr key={i} style={{ borderBottom: '1px solid #f9f9f9', background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                      {celulas.map((cel, j) => (
-                        <td key={j} style={{ padding: '11px 16px', color: '#374151' }}>
-                          {/* Tag colorida para estado */}
-                          {tab === 'candidaturas' && j === 5 ? (
-                            <span style={{
-                              background: corEstado[cel]?.bg ?? '#f3f4f6',
-                              color: corEstado[cel]?.color ?? '#6b7280',
-                              borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                            }}>{cel}</span>
-                          ) : tab === 'badges' && j === 6 ? (
-                            <span style={{ color: cel === 'Sim' ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{cel}</span>
-                          ) : (
-                            <span style={{ color: j === 0 ? '#6b7280' : '#374151' }}>{cel}</span>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
+        {/* ── Gráfico(s) ── */}
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>A carregar...</div>
+        ) : grafico === 'evolucao' ? (
+          <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Evolução Mensal</h4>
+                <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Badges atribuídos na sua Service Line em cada mês</p>
+              </div>
+              <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+            </div>
+            {evolucao.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados no período selecionado.</p>
+            ) : (
+              <Line
+                data={{
+                  labels: evolucao.map(e => e.mes),
+                  datasets: [{
+                    data: evolucao.map(e => e.total),
+                    borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.12)',
+                    tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: '#06b6d4', pointBorderWidth: 2,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: { grid: { color: '#f0f0f0' }, border: { display: false }, ticks: { font: { size: 11 } }, beginAtZero: true },
+                  },
+                }}
+              />
+            )}
+          </div>
+        ) : grafico === 'area' ? (
+          <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Badges por Área</h4>
+                <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Quantidade de badges que tem cada área na sua Service Line</p>
+              </div>
+              <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+            </div>
+            {porArea.areas.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados disponíveis.</p>
+            ) : (
+              <Bar
+                data={{
+                  labels: porArea.areas.map(a => a.nome),
+                  datasets: [
+                    { label: porArea.labelMesAnterior, data: porArea.areas.map(a => a.mesAnterior), backgroundColor: CORES_AREA[0], borderRadius: 4, barThickness: 20 },
+                    { label: porArea.labelMesAtual,     data: porArea.areas.map(a => a.mesAtual),     backgroundColor: CORES_AREA[1], borderRadius: 4, barThickness: 20 },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } } },
+                  },
+                  scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: { grid: { color: '#f0f0f0' }, border: { display: false }, ticks: { font: { size: 11 } }, beginAtZero: true },
+                  },
+                }}
+              />
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div>
+                  <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Badges por Nível</h4>
+                  <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Percentagem de badges disponíveis em cada nível na sua Service Line</p>
+                </div>
+                <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+              </div>
+              {porNivel.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados disponíveis.</p>
+              ) : (
+                <Pie
+                  data={{
+                    labels: porNivel.map(n => `${n.nome} (${n.percentagem}%)`),
+                    datasets: [{
+                      data: porNivel.map(n => n.percentagem),
+                      backgroundColor: ['#2b3a67', '#39639C', '#7dd8f0', '#a0aec0', '#7eecd4'],
+                      borderWidth: 0,
+                    }],
+                  }}
+                  options={{
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } } } },
+                  }}
+                />
+              )}
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div>
+                  <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Cumprimento de SLA</h4>
+                  <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Percentagem de badges atribuídos dentro do prazo na sua Service Line</p>
+                </div>
+                <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+              </div>
+              <div style={{ position: 'relative', width: 220, height: 220, margin: '10px auto 0' }}>
+                <Doughnut
+                  data={{
+                    datasets: [{
+                      data: [sla.percentagem, 100 - sla.percentagem],
+                      backgroundColor: ['#06b6d4', '#e9ecef'],
+                      borderWidth: 0,
+                    }],
+                  }}
+                  options={{ cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }}
+                />
+                <div style={{
+                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1a2e' }}>{sla.percentagem}%</div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Dentro do Prazo<br />SLA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Exportar Dados ── */}
+        <div style={{ marginTop: 8 }}>
+          <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Exportar Dados</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            {Object.values(EXPORTACOES).map((e, i) => (
+              <div key={i} style={{
+                background: '#fff', borderRadius: 14, padding: '20px 18px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', textAlign: 'center',
+              }}>
+                <p style={{ fontWeight: 700, fontSize: 12, color: '#333', letterSpacing: 0.5, marginBottom: 16 }}>{e.titulo}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'excel')} style={btnExport}>
+                    <FiDownload style={{ marginRight: 5 }} /> Exportar Excel
+                  </button>
+                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'pdf')} style={btnExport}>
+                    <FiDownload style={{ marginRight: 5 }} /> Exportar PDF
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 12, fontSize: 11, color: '#aaa' }}>Política de Privacidade e RGPD</div>
+        <div style={{ textAlign: 'right', marginTop: 20, fontSize: 11, color: '#aaa' }}>Política de Privacidade e RGPD</div>
       </div>
     </LayoutSL>
   )
 }
 
 const btnExport = {
-  display: 'flex', alignItems: 'center',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
   background: '#fff', border: '1.5px solid #39639C',
-  borderRadius: 12, padding: '8px 16px',
-  fontSize: 13, fontWeight: 500, color: '#39639C', cursor: 'pointer',
+  borderRadius: 10, padding: '8px 14px',
+  fontSize: 12, fontWeight: 500, color: '#39639C', cursor: 'pointer',
+}
+
+const btnOutline = {
+  background: '#fff', color: '#39639C', border: '1px solid #39639C',
+  borderRadius: 10, padding: '9px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+}
+
+const btnOutlineSmall = {
+  background: '#fff', color: '#39639C', border: '1px solid #39639C',
+  borderRadius: 8, padding: '6px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
 }
