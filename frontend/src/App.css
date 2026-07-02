@@ -294,7 +294,7 @@ barras
   left: 0;
   width: 200px;
   height: calc(100vh - 60px);
-  background: white;
+  background: var(--cor-fundo);
   border-right: 1px solid var(--cor-borda);
   display: flex;
   flex-direction: column;
