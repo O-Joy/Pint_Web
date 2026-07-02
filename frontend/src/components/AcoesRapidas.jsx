@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom'
+
 export default function AcoesRapidas({ cards }) {
+  const navigate = useNavigate()
+
   return (
     <section>
       <h2 className="acoes-rapidas-titulo">Ações Rápidas</h2>
@@ -12,7 +16,12 @@ export default function AcoesRapidas({ cards }) {
                   <li key={j}>{item}</li>
                 ))}
               </ul>
-              <button className="auth-btn-primary acoes-rapidas-btn">{card.botao}</button>
+              <button
+                className="auth-btn-primary acoes-rapidas-btn"
+                onClick={() => card.path && navigate(card.path)}
+              >
+                {card.botao}
+              </button>
             </div>
           </div>
         ))}

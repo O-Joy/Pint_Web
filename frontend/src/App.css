@@ -689,3 +689,420 @@ barras
 .logout-modal-confirmar:hover {
   background: var(--cor-primaria-escura);
 }
+
+/* ============================================================
+   DASHBOARD DO CONSULTOR
+   ============================================================ */
+
+.dashboard-wrapper {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-titulo {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+}
+
+.dashboard-vazio {
+  text-align: center;
+  color: var(--cor-texto-secundario);
+  font-size: 0.85rem;
+  padding: 1rem 0;
+}
+
+.dashboard-subtitulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+  margin: 1rem 0 0.6rem;
+}
+
+.dashboard-card {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.dashboard-card-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+  margin-bottom: 0.75rem;
+}
+
+/* Cards de resumo (4 no topo) */
+
+.dashboard-resumo-card {
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.dashboard-resumo-icone {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #eef3fa;
+  color: var(--cor-primaria);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.dashboard-resumo-valor {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  line-height: 1.1;
+}
+
+.dashboard-resumo-label {
+  font-size: 0.75rem;
+  color: var(--cor-texto-secundario);
+}
+
+/* Objetivos — donut + progresso */
+
+.dashboard-objetivos-topo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.dashboard-donut {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+}
+
+.dashboard-donut-centro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+}
+
+.dashboard-objetivos-info {
+  font-size: 0.8rem;
+  color: var(--cor-texto-secundario);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-donut-legenda {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--cor-texto-secundario);
+  margin-top: 0.5rem;
+}
+
+.objetivo-progresso-item {
+  background: var(--cor-fundo);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  height: 100%;
+}
+
+.objetivo-progresso-titulo {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  margin-bottom: 0.5rem;
+}
+
+.objetivo-progresso-barra {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.objetivo-progresso-barra-fill {
+  height: 100%;
+  background: var(--cor-primaria);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.objetivo-progresso-rodape {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--cor-texto-secundario);
+  margin-top: 0.4rem;
+}
+
+/* Gamification — pódio */
+
+.dashboard-podio {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 1rem;
+}
+
+.dashboard-podio-coluna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+}
+
+.dashboard-podio-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: var(--cor-texto-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.dashboard-podio-nome {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  text-align: center;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.dashboard-podio-pontos {
+  font-size: 0.68rem;
+  color: var(--cor-texto-secundario);
+  margin-bottom: 6px;
+}
+
+.dashboard-podio-barra {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(74, 159, 212, 0.35) 0%, var(--cor-primaria) 100%);
+  border-radius: 8px 8px 0 0;
+}
+
+.dashboard-podio-posicao {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+  margin-top: 4px;
+}
+
+/* O teu desempenho */
+
+.dashboard-desempenho-card {
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-desempenho-pontos {
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.dashboard-ranking-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.dashboard-ranking-tabela th {
+  text-align: left;
+  color: var(--cor-texto-secundario);
+  font-weight: 600;
+  padding: 4px 4px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.dashboard-ranking-tabela td {
+  padding: 6px 4px;
+  color: var(--cor-texto);
+  border-bottom: 1px solid var(--cor-fundo);
+}
+
+.dashboard-verlink {
+  background: none;
+  border: none;
+  color: var(--cor-primaria);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.4rem 0 0;
+}
+
+/* Badges recomendados */
+
+.dashboard-secao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-secao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge-recomendado-card {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  height: 100%;
+  transition: box-shadow 0.2s ease;
+}
+
+.badge-recomendado-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.badge-recomendado-icone {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: rgb(248, 172, 30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35px;
+  overflow: hidden;
+}
+
+.badge-recomendado-icone img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.badge-recomendado-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge-recomendado-nome {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-recomendado-nivel {
+  font-size: 0.7rem;
+  color: var(--cor-texto-secundario);
+}
+
+.badge-recomendado-requisitos {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+  background: #eef3fa;
+  border-radius: 20px;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.badge-recomendado-seta {
+  color: var(--cor-texto-secundario);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Ações Rápidas */
+
+.acoes-rapidas-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cor-primaria);
+  margin-bottom: 0.9rem;
+}
+
+.acoes-rapidas-card {
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.acoes-rapidas-descricao {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  margin-bottom: 8px;
+}
+
+.acoes-rapidas-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acoes-rapidas-btn {
+  margin-top: auto;
+  width: 100%;
+  background: linear-gradient(90deg, #c4d6f2 0%, #32528c 100%);
+  border: none;
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .dashboard-donut {
+    width: 90px;
+    height: 90px;
+  }
+}

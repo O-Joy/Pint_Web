@@ -1,9 +1,30 @@
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 const Candidatura = require('../model/candidatura');
 const BadgeUtilizador = require('../model/badgeUtilizador');
+const BadgeRegular = require('../model/badgeRegular');
+const BadgeEspecial = require('../model/badgeEspecial');
 const Objetivo = require('../model/objetivo');
 const TipoObjetivo = require('../model/tipoObjetivo');
 const LearningPath = require('../model/learningPath');
+const Consultor = require('../model/consultor');
+const Area = require('../model/area');
+const Nivel = require('../model/nivel');
+const Requisitos = require('../model/requisitos');
+const { calcularRanking } = require('./gamification.controller');
+
+// Ordem hierárquica dos níveis dentro de uma área — Júnior → Líder.
+// Baseada no valor da coluna "tipo" em cada nível (JN/IN/SN/EP/LD).
+// NOTA: esta ordem não é imposta por nenhuma constraint da BD — é uma
+// convenção observada nos dados existentes (5 níveis por área, sempre
+// nesta sequência).
+const ORDEM_NIVEIS = ['JN', 'IN', 'SN', 'EP', 'LD'];
+
+// IDs dos tipos de objetivo (tabela tipo_objetivo)
+const TIPO_COMPLETAR_AREA = 1;
+const TIPO_COMPLETAR_SERVICE_LINE = 2;
+const TIPO_COMPLETAR_LEARNING_PATH = 3;
+const TIPO_ATINGIR_NIVEL_LIDER = 4;
+const TIPO_ATINGIR_TOPO_GAMIFICATION = 5;
 
 // Estados "a decorrer" — excluindo Aprovada(5) e Rejeitada(6)
 const ESTADOS_EM_CURSO = [1, 2, 3, 4];
@@ -90,5 +111,246 @@ exports.getObjetivos = async (req, res) => {
   } catch (err) {
     console.error('[dashboard/objetivos]', err);
     res.status(500).json({ error: 'Erro ao carregar objetivos.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/dashboard/objetivos-resumo
+// Card "Objetivos" do dashboard: % de progresso na Learning Path
+// + até 2 objetivos em curso, com progresso real calculado consoante o tipo de objetivo
+//   1. Completar Área
+//   2. Completar Service Line
+//   3. Completar Learning Path
+//   4. Atingir Nível Líder
+//   5. Atingir Topo Gamification
+// ─────────────────────────────────────────────────────────────
+exports.getObjetivosResumo = async (req, res) => {
+  const idUtilizador = req.user.idUtilizador;
+
+  try {
+    const consultor = await Consultor.findOne({ where: { idUtilizador } });
+    const idAreaConsultor = consultor?.idArea ?? null;
+    const idLearningPathConsultor = consultor?.idLearningPath ?? null;
+
+    const areaConsultor = idAreaConsultor
+      ? await Area.findOne({ where: { idArea: idAreaConsultor } })
+      : null;
+    const idServiceLineConsultor = areaConsultor?.idServiceLine ?? null;
+
+    // Badges válidas do consultor
+    const badgesUtilizador = await BadgeUtilizador.findAll({ where: { idUtilizador, valido: 1 } });
+    const idsBadgeRegularGanhos = badgesUtilizador.filter(b => b.idBadgeRegular).map(b => b.idBadgeRegular);
+    const idsBadgeEspecialGanhos = badgesUtilizador.filter(b => b.idBadgeEspecial).map(b => b.idBadgeEspecial);
+
+    const badgesRegularesGanhos = idsBadgeRegularGanhos.length
+      ? await BadgeRegular.findAll({ where: { idBadgeRegular: { [Op.in]: idsBadgeRegularGanhos } } })
+      : [];
+
+    // % de progresso na Learning Path (gráfico circular)
+    // Usa o objetivo "Completar Learning Path" em curso, se existir;
+    // senão cai para a Learning Path do próprio consultor.
+    const objetivoLP = await Objetivo.findOne({
+      where: { idUtilizador, idTipoObjetivo: TIPO_COMPLETAR_LEARNING_PATH, estado: 'Em Curso' },
+    });
+    const idLearningPathAlvo = objetivoLP?.idLearningPath ?? idLearningPathConsultor;
+
+    let progressoLearningPath = 0;
+    if (idLearningPathAlvo) {
+      const totalRegularesLP = await BadgeRegular.count({ where: { idLearningPath: idLearningPathAlvo, ativo: 1 } });
+      const totalEspeciaisLP = await BadgeEspecial.count({ where: { idLearningPath: idLearningPathAlvo, ativo: 1 } });
+      const metaLP = totalRegularesLP + totalEspeciaisLP;
+
+      const ganhosRegularesLP = badgesRegularesGanhos.filter(b => b.idLearningPath === idLearningPathAlvo).length;
+      const ganhosEspeciaisLP = idsBadgeEspecialGanhos.length
+        ? await BadgeEspecial.count({ where: { idBadgeEspecial: { [Op.in]: idsBadgeEspecialGanhos }, idLearningPath: idLearningPathAlvo } })
+        : 0;
+      const atualLP = ganhosRegularesLP + ganhosEspeciaisLP;
+
+      progressoLearningPath = metaLP > 0 ? Math.round((atualLP / metaLP) * 100) : 0;
+    }
+
+    //"X Áreas Completas" / "Y Service Lines Concluídas"
+    const todasAreas = await Area.findAll({ where: { ativo: 1 } });
+    let areasCompletas = 0;
+    for (const area of todasAreas) {
+      const totalArea = await BadgeRegular.count({ where: { idArea: area.idArea, ativo: 1 } });
+      const ganhosArea = badgesRegularesGanhos.filter(b => b.idArea === area.idArea).length;
+      if (totalArea > 0 && ganhosArea >= totalArea) areasCompletas++;
+    }
+
+    const idsServiceLine = [...new Set(todasAreas.map(a => a.idServiceLine))];
+    let serviceLinesConcluidas = 0;
+    for (const idSL of idsServiceLine) {
+      const totalSL = await BadgeRegular.count({ where: { idServiceLine: idSL, ativo: 1 } });
+      const ganhosSL = badgesRegularesGanhos.filter(b => b.idServiceLine === idSL).length;
+      if (totalSL > 0 && ganhosSL >= totalSL) serviceLinesConcluidas++;
+    }
+
+    //Objetivos em curso (máx. 2, para os cartões de progresso)
+    const objetivosEmCurso = await Objetivo.findAll({
+      where: { idUtilizador, estado: 'Em Curso' },
+      order: [['dataFim', 'ASC']],
+      limit: 2,
+    });
+
+    // Ranking geral — só é calculado se houver algum objetivo do tipo 5
+    const precisaRanking = objetivosEmCurso.some(o => o.idTipoObjetivo === TIPO_ATINGIR_TOPO_GAMIFICATION);
+    const rankingGeral = precisaRanking ? await calcularRanking() : null;
+
+    const objetivosEmProgresso = await Promise.all(
+      objetivosEmCurso.map(async (obj) => {
+        const tipo = await TipoObjetivo.findOne({ where: { idTipoObjetivo: obj.idTipoObjetivo } });
+        const titulo = tipo?.nome ?? 'Objetivo';
+
+        let atual = 0;
+        let meta = 1;
+        let formato = 'fracao'; // fracao -> "3/5"  |  posicao -> "9º (meta: Top 3)"
+
+        switch (obj.idTipoObjetivo) {
+          case TIPO_COMPLETAR_AREA: {
+            meta = await BadgeRegular.count({ where: { idArea: idAreaConsultor, ativo: 1 } });
+            atual = badgesRegularesGanhos.filter(b => b.idArea === idAreaConsultor).length;
+            break;
+          }
+
+          case TIPO_COMPLETAR_SERVICE_LINE: {
+            meta = await BadgeRegular.count({ where: { idServiceLine: idServiceLineConsultor, ativo: 1 } });
+            atual = badgesRegularesGanhos.filter(b => b.idServiceLine === idServiceLineConsultor).length;
+            break;
+          }
+
+          case TIPO_COMPLETAR_LEARNING_PATH: {
+            const idLP = obj.idLearningPath ?? idLearningPathConsultor;
+            const totalRegulares = await BadgeRegular.count({ where: { idLearningPath: idLP, ativo: 1 } });
+            const totalEspeciais = await BadgeEspecial.count({ where: { idLearningPath: idLP, ativo: 1 } });
+            meta = totalRegulares + totalEspeciais;
+
+            const ganhosRegulares = badgesRegularesGanhos.filter(b => b.idLearningPath === idLP).length;
+            const ganhosEspeciais = idsBadgeEspecialGanhos.length
+              ? await BadgeEspecial.count({ where: { idBadgeEspecial: { [Op.in]: idsBadgeEspecialGanhos }, idLearningPath: idLP } })
+              : 0;
+            atual = ganhosRegulares + ganhosEspeciais;
+            break;
+          }
+
+          case TIPO_ATINGIR_NIVEL_LIDER: {
+            meta = ORDEM_NIVEIS.length; // 5 (Júnior → Líder)
+            const idsNiveisGanhos = badgesRegularesGanhos
+              .filter(b => b.idArea === idAreaConsultor)
+              .map(b => b.idNivel);
+            const niveisGanhos = idsNiveisGanhos.length
+              ? await Nivel.findAll({ where: { idNivel: { [Op.in]: idsNiveisGanhos } } })
+              : [];
+            const posicoes = niveisGanhos
+              .map(n => ORDEM_NIVEIS.indexOf(n.tipo) + 1)
+              .filter(p => p > 0);
+            atual = posicoes.length ? Math.max(...posicoes) : 0;
+            break;
+          }
+
+          case TIPO_ATINGIR_TOPO_GAMIFICATION: {
+            meta = 3;
+            formato = 'posicao';
+            const minhaPosicao = rankingGeral?.find(r => r.idUtilizador === idUtilizador);
+            atual = minhaPosicao?.posicao ?? null;
+            break;
+          }
+
+          default:
+            meta = 1;
+            atual = 0;
+        }
+
+        const atualLimitado = formato === 'fracao' ? Math.min(atual, meta) : atual;
+        let percentagem = 0;
+        if (formato === 'fracao') {
+          percentagem = meta > 0 ? Math.round((atualLimitado / meta) * 100) : 0;
+        } else if (atual != null) {
+          // formato posicao: 100% assim que a posição atual está dentro da meta (top 3);
+          // antes disso, escala progressivamente com base na distância à última posição do ranking
+          const totalRanking = rankingGeral?.length ?? atual;
+          percentagem = atual <= meta
+            ? 100
+            : Math.round(Math.max(0, (totalRanking - atual) / Math.max(1, totalRanking - meta)) * 100);
+        }
+
+        return {
+          id: obj.idObjetivo,
+          titulo,
+          formato,
+          atual: atualLimitado,
+          meta,
+          percentagem,
+          dataFim: obj.dataFim,
+        };
+      })
+    );
+
+    res.json({
+      progressoLearningPath,
+      areasCompletas,
+      serviceLinesConcluidas,
+      objetivosEmProgresso,
+    });
+  } catch (err) {
+    console.error('[dashboard/objetivos-resumo]', err);
+    res.status(500).json({ error: 'Erro ao carregar resumo de objetivos.' });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/dashboard/badges-recomendados
+// Até 4 badges regulares que o consultor ainda não tem,
+// priorizando a área do consultor
+// ─────────────────────────────────────────────────────────────
+exports.getBadgesRecomendados = async (req, res) => {
+  const idUtilizador = req.user.idUtilizador;
+
+  try {
+    const consultor = await Consultor.findOne({ where: { idUtilizador } });
+    const idAreaConsultor = consultor?.idArea ?? null;
+
+    const badgesGanhos = await BadgeUtilizador.findAll({
+      where: { idUtilizador, idBadgeRegular: { [Op.ne]: null } },
+    });
+    const idsGanhos = badgesGanhos.map(b => b.idBadgeRegular);
+
+    const disponiveis = await BadgeRegular.findAll({
+      where: {
+        ativo: 1,
+        ...(idsGanhos.length ? { idBadgeRegular: { [Op.notIn]: idsGanhos } } : {}),
+      },
+      order: [['nomeBadge', 'ASC']],
+    });
+
+    // Prioriza badges da área do consultor, depois as restantes
+    const ordenados = idAreaConsultor
+      ? [
+          ...disponiveis.filter(b => b.idArea === idAreaConsultor),
+          ...disponiveis.filter(b => b.idArea !== idAreaConsultor),
+        ]
+      : disponiveis;
+
+    const top4 = ordenados.slice(0, 4);
+
+    const resultado = await Promise.all(
+      top4.map(async (b) => {
+        const nivel = b.idNivel ? await Nivel.findOne({ where: { idNivel: b.idNivel } }) : null;
+        const numRequisitos = await Requisitos.count({ where: { idBadgeRegular: b.idBadgeRegular } });
+
+        return {
+          id: b.idBadgeRegular,
+          nome: b.nomeBadge,
+          nomeNivel: nivel?.nomeNivel ?? null,
+          urlImagem: b.urlImagemBadge,
+          numRequisitos,
+        };
+      })
+    );
+
+    res.json(resultado);
+  } catch (err) {
+    console.error('[dashboard/badges-recomendados]', err);
+    res.status(500).json({ error: 'Erro ao carregar badges recomendados.' });
   }
 };

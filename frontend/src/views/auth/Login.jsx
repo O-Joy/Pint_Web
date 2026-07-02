@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import AuthLayout from '../../components/AuthLayout'
 import { login } from '../../services/api'
+import { guardarSessao } from '../../utils/auth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -34,13 +35,9 @@ export default function Login() {
       const { token } = res.data
       const dados = res.data.consultor || res.data.utilizador
       const dadosComPerfil = { ...dados, perfil: res.data.perfil }
-      if (manterSessao) {
-        localStorage.setItem('token', token)
-        localStorage.setItem('utilizador', JSON.stringify(dadosComPerfil))
-      } else {
-        sessionStorage.setItem('token', token)
-        sessionStorage.setItem('utilizador', JSON.stringify(dadosComPerfil))
-      }
+      
+      guardarSessao(token, dadosComPerfil, manterSessao)
+      
       const primeiroAcesso = res.data.consultor?.primeiroAcesso ?? false
       if (primeiroAcesso) { navigate('/escolha-area'); return }
       const perfil = res.data.perfil

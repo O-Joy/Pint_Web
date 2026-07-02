@@ -20,14 +20,14 @@ import DashboardAdmin from './views/admin/Dashboard'
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
 import Consultores from './views/serviceline/Consultores'
-import Validacoes from './views/serviceline/Validacoes'
+import ValidacoesSL from './views/serviceline/Validacoes'
 import Relatorios from './views/serviceline/Relatorios'
 import Gamification from './views/serviceline/Gamification'
 import BadgesSL from './views/serviceline/Badges'
 
 //Talent Manager
 import DashboardTalent from './views/talentmanager/Dashboard'
-import Validacoes from './views/talentmanager/Validacoes'
+import ValidacoesTM from './views/talentmanager/Validacoes'
 import Badges from './views/talentmanager/Badges'
 //import Consultores from './views/talentmanager/Consultores'
 //import Relatorios from './views/talentmanager/Relatorios'
@@ -73,9 +73,9 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/talent/validacoes" element={
+        <Route path="/talent/validacoesTM" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Validacoes />
+            <ValidacoesTM />
           </ProtectedRoute>
         } />
 
@@ -114,9 +114,9 @@ function App() {
             <DashboardServiceLine />
           </ProtectedRoute>
         } />
-        <Route path="/serviceline/validacoes" element={
+        <Route path="/serviceline/validacoesSL" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <Validacoes/>
+            <ValidacoesSL/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/badges" element={
