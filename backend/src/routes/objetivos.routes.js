@@ -5,11 +5,12 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// GET /api/objetivos             → todos os objetivos do consultor
-// GET /api/objetivos/em-curso    → só os em curso
-// GET /api/objetivos/concluidos  → só os concluídos
-router.get('/objetivos', objetivosController.getObjetivos);
+router.get('/objetivos/tipos', objetivosController.getTipos);
 router.get('/objetivos/em-curso', objetivosController.getObjetivosEmCurso);
-router.get('/objetivos/concluidos', objetivosController.getObjetivosConcluidos);
+router.get('/objetivos/historico', objetivosController.getHistorico);
+router.get('/objetivos', objetivosController.getObjetivos);
+router.post('/objetivos', objetivosController.criarObjetivo);
+router.put('/objetivos/:id', objetivosController.editarObjetivo);
+router.delete('/objetivos/:id', objetivosController.removerObjetivo);
 
 module.exports = router;

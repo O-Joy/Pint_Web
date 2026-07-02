@@ -23,8 +23,15 @@ const Evidencia         = require('../model/evidencia');
 const Requisitos        = require('../model/requisitos');
 const BadgeRegular      = require('../model/badgeRegular');
 const Nivel             = require('../model/nivel');
+const Area              = require('../model/area');
 const path              = require('path');
 const fs                = require('fs');
+
+// Estados que indicam que o TM/SLL devolveu a candidatura — o consultor
+// tem de corrigir e reenviar
+const ESTADOS_RETIFICACAO = [2, 4];
+// Estados finais (já não estão em curso)
+const ESTADOS_FINAIS = [5, 6];
 
 // ─────────────────────────────────────────────────────────────
 // HELPER: monta o nome do estado a partir do id
@@ -72,16 +79,35 @@ exports.getCandidaturas = async (req, res) => {
     const resultado = await Promise.all(candidaturas.map(async (c) => {
       const nomeEstado = await getNomeEstado(c.idEstadoAtual);
 
-      // Vai buscar o nome do badge e nível via JOIN manual (sem associações Sequelize)
+      // Vai buscar o nome do badge, nível e área via JOIN manual (sem associações Sequelize)
       let nomeBadge = 'Desconhecido';
       let nomeNivel = null;
+      let nomeArea = null;
+      let pontos = null;
       const br = await BadgeRegular.findOne({ where: { idBadgeRegular: c.idBadgeRegular } });
       if (br) {
         nomeBadge = br.nomeBadge;
+        pontos = br.pontos;
         if (br.idNivel) {
           const nivel = await Nivel.findOne({ where: { idNivel: br.idNivel } });
           if (nivel) nomeNivel = nivel.nomeNivel;
         }
+        if (br.idArea) {
+          const area = await Area.findOne({ where: { idArea: br.idArea } });
+          if (area) nomeArea = area.nomeArea;
+        }
+      }
+
+      const numRequisitos = await Requisitos.count({ where: { idBadgeRegular: c.idBadgeRegular } });
+
+      // Data de decisão — a data do último registo de histórico com estado final (Aprovada/Rejeitada)
+      let dataDecisao = null;
+      if (ESTADOS_FINAIS.includes(c.idEstadoAtual)) {
+        const ultimoHistorico = await HistoricoCandidatura.findOne({
+          where: { numCandidatura: c.numCandidatura, idEstadoAtual: c.idEstadoAtual },
+          order: [['dataAlteracao', 'DESC']],
+        });
+        dataDecisao = ultimoHistorico?.dataAlteracao ?? null;
       }
 
       return {
@@ -90,9 +116,14 @@ exports.getCandidaturas = async (req, res) => {
         idCandidato: c.idCandidato,
         idEstadoAtual: c.idEstadoAtual,
         dataCriacao: c.dataCriacao,
+        dataDecisao,
         nomeBadge,
         nomeNivel,
+        nomeArea,
+        pontos,
+        numRequisitos,
         nomeEstadoAtual: nomeEstado,
+        acaoNecessaria: ESTADOS_RETIFICACAO.includes(c.idEstadoAtual),
       };
     }));
 
@@ -125,16 +156,34 @@ exports.getDetalhesCandidatura = async (req, res) => {
       order: [['dataAlteracao', 'ASC']],
     });
 
-    const historicoFormatado = await Promise.all(historico.map(async (h) => ({
-      idTransacao: h.idTransacao,
-      numCandidatura: h.numCandidatura,
-      idResponsavel: h.idResponsavel,
-      tipoResponsavel: h.tipoResponsavel,
-      dataAlteracao: h.dataAlteracao,
-      idEstadoAtual: h.idEstadoAtual,
-      nomeEstadoAtual: await getNomeEstado(h.idEstadoAtual),
-      comentario: h.comentario,
-    })));
+    const Utilizador = require('../model/utilizador');
+    const SIGLA_RESPONSAVEL = { talent_manager: 'TM', sl_leader: 'SLL' };
+
+    let estadoAnteriorNome = null; // vai andando à medida que percorremos por ordem cronológica
+    const historicoFormatado = [];
+    for (const h of historico) {
+      let nomeResponsavel = null;
+      if (h.idResponsavel) {
+        const resp = await Utilizador.findOne({ where: { idUtilizador: h.idResponsavel } });
+        const sigla = SIGLA_RESPONSAVEL[h.tipoResponsavel] || '';
+        nomeResponsavel = resp ? `${resp.nomeUtilizador}${sigla ? ' - ' + sigla : ''}` : null;
+      }
+
+      historicoFormatado.push({
+        idTransacao: h.idTransacao,
+        numCandidatura: h.numCandidatura,
+        idResponsavel: h.idResponsavel,
+        nomeResponsavel,
+        tipoResponsavel: h.tipoResponsavel,
+        dataAlteracao: h.dataAlteracao,
+        idEstadoAtual: h.idEstadoAtual,
+        nomeEstadoAtual: await getNomeEstado(h.idEstadoAtual),
+        estadoAnterior: estadoAnteriorNome,
+        comentario: h.comentario,
+      });
+
+      estadoAnteriorNome = await getNomeEstado(h.idEstadoAtual);
+    }
 
     // Evidências submetidas
     const evidencias = await Evidencia.findAll({
@@ -150,7 +199,7 @@ exports.getDetalhesCandidatura = async (req, res) => {
       estado: e.estado,
     }));
 
-    return res.json({ historico: historicoFormatado, evidencias: evidenciasFormatadas });
+    return res.json({ historico: historicoFormatado.reverse(), evidencias: evidenciasFormatadas });
   } catch (err) {
     console.error('[candidaturas] getDetalhesCandidatura:', err.message);
     return res.status(500).json({ error: 'Erro interno ao obter detalhes.' });
