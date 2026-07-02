@@ -1,3 +1,4 @@
+// controllers/serviceline_gamification.js
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 
@@ -5,10 +6,20 @@ const Utilizador = require('../model/utilizador');
 const Consultor = require('../model/consultor');
 const BadgeUtilizador = require('../model/badgeUtilizador');
 const Pontuacao = require('../model/pontuacao');
+const SlLeader = require('../model/slleader'); // <-- Adicionar este import
+const Area = require('../model/area');         // <-- Adicionar este import
 
 exports.getRankingGlobal = async (req, res) => {
   try {
-    // Vai buscar TODOS os consultores sem filtrar por área ou Service Line
+    // 1. Descobrir as áreas da Service Line do Leader logado
+    const slLeader = await SlLeader.findOne({ where: { idUtilizador: req.user.idUtilizador } });
+    let idsAreasSL = [];
+    if (slLeader) {
+      const areas = await Area.findAll({ where: { idServiceLine: slLeader.idServiceLine } });
+      idsAreasSL = areas.map(a => a.idArea);
+    }
+
+    // 2. Vai buscar TODOS os consultores
     const consultores = await Consultor.findAll();
 
     const resultado = await Promise.all(consultores.map(async (c) => {
@@ -22,7 +33,8 @@ exports.getRankingGlobal = async (req, res) => {
         idUtilizador: c.idUtilizador, 
         nome: u?.nomeUtilizador ?? '-', 
         totalBadges, 
-        totalPontos 
+        totalPontos,
+        isMinhaSL: idsAreasSL.includes(c.idArea) // <-- Nova flag: true se for da SL do Leader
       };
     }));
 

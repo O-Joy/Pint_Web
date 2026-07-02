@@ -20,6 +20,7 @@ import DashboardAdmin from './views/admin/Dashboard'
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
 import Consultores from './views/serviceline/Consultores'
+import ConsultorDetalhe from './views/serviceline/ConsultorDetalhe'
 import ValidacoesSL from './views/serviceline/Validacoes'
 import Relatorios from './views/serviceline/Relatorios'
 import Gamification from './views/serviceline/Gamification'
@@ -151,6 +152,11 @@ function App() {
         <Route path="/serviceline/consultores" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
             <Consultores/>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/consultores/:id" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <ConsultorDetalhe/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/relatorios" element={

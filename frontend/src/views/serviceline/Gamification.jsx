@@ -117,10 +117,10 @@ export default function Gamification() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ color: '#39639C', fontWeight: 700,fontSize: '22px', margin: 0, textTransform: 'uppercase' }}>Gamification</h2>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={exportarExcel} style={{ background: '#fff', color: '#6b7280', border: '1px solid #ddd', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
+            <button onClick={exportarExcel} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
               Exportar Excel
             </button>
-            <button onClick={exportarPDF} style={{ background: '#fff', color: '#6b7280', border: '1px solid #ddd', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
+            <button onClick={exportarPDF} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
               Exportar PDF
             </button>
           </div>
@@ -256,15 +256,36 @@ export default function Gamification() {
                   </thead>
                   <tbody>
                     {ranking.map((c) => (
-                      <tr key={c.idUtilizador} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                        <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 700, color: '#39639C' }}>{c.posicao}º</td>
+                      <tr 
+                        key={c.idUtilizador} 
+                        style={{ 
+                          borderBottom: '1px solid #f9f9f9', 
+                          // Se for da equipa, pinta de cinzento claro, senão fundo normal (branco)
+                          background: c.isMinhaSL ? '#f1f5f9' : '#fff' 
+                        }}
+                      >
+                        <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 700, color: '#39639C' }}>
+                          {c.posicao}º
+                        </td>
                         <td style={{ padding: '12px 8px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#64748b' }}>
+                          <div style={{ 
+                            width: 24, height: 24, borderRadius: '50%', 
+                            background: c.isMinhaSL ? '#cbd5e1' : '#e2e8f0', // Avatar um pouco mais escuro se for da equipa
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: 10, color: '#64748b' 
+                          }}>
                             {c.nome?.[0]}
                           </div>
-                          {c.nome}
+                          <span style={{ 
+                            fontWeight: c.isMinhaSL ? 600 : 400, 
+                            color: c.isMinhaSL ? '#39639C' : '#1e293b' 
+                          }}>
+                            {c.nome}
+                          </span>
                         </td>
-                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#64748b' }}>{c.totalPontos} pts</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#64748b' }}>
+                          {c.totalPontos} pts
+                        </td>
                         <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 600, color: c.evolucao > 0 ? '#22c55e' : '#ef4444' }}>
                           {c.evolucao > 0 ? `+${c.evolucao}` : c.evolucao}
                         </td>

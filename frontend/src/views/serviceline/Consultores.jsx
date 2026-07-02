@@ -1,37 +1,38 @@
 // src/views/serviceline/Consultores.jsx
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
-import { FiDownload, FiSearch } from 'react-icons/fi'
+import { FiSearch, FiEye, FiCalendar } from 'react-icons/fi'
 import { MdMilitaryTech, MdPerson } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-const corMedalha = (posicao) => {
-  if (posicao === 1) return '#f0b429' // ouro
-  if (posicao === 2) return '#b0b0b0' // prata
-  if (posicao === 3) return '#a0522d' // bronze
-  return '#cbd5e1'
+const formatarData = (data) => {
+  if (!data) return '-'
+  return new Date(data).toLocaleDateString('pt-PT')
 }
 
 export default function Consultores() {
+  const navigate = useNavigate()
   const [consultores, setConsultores] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState('')
   const [filtroArea, setFiltroArea] = useState('todas')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
 
-    useEffect(() => {
+  useEffect(() => {
     api.get('/sl/consultores')
-        .then(res => {
-        console.log('[Consultores] resposta:', res.status, res.data)
+      .then(res => {
         setConsultores(Array.isArray(res.data) ? res.data : [])
-        })
-        .catch(err => {
+      })
+      .catch(err => {
         console.error('[Consultores] ERRO:', err.response?.status, err.response?.data || err.message)
-        })
-        .finally(() => setLoading(false))
-    }, [])
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   // a API já devolve ordenado por pontos (desc) — a posição vem do índice original
   const ranking = consultores.map((c, i) => ({ ...c, posicao: i + 1 }))
@@ -39,9 +40,20 @@ export default function Consultores() {
   const areas = [...new Set(ranking.map(c => c.nomeArea).filter(Boolean))]
 
   const filtrados = ranking.filter(c => {
-    const matchNome = c.nome?.toLowerCase().includes(filtro.toLowerCase())
+    const termo = filtro.toLowerCase()
+    const matchTexto = !termo || c.nome?.toLowerCase().includes(termo) || c.email?.toLowerCase().includes(termo)
     const matchArea = filtroArea === 'todas' || c.nomeArea === filtroArea
-    return matchNome && matchArea
+
+    let matchData = true
+    if (c.ultimaAtividade && (dataInicio || dataFim)) {
+      const dAtiv = new Date(c.ultimaAtividade)
+      if (dataInicio) matchData = matchData && dAtiv >= new Date(dataInicio)
+      if (dataFim)    matchData = matchData && dAtiv <= new Date(dataFim + 'T23:59:59')
+    } else if (!c.ultimaAtividade && (dataInicio || dataFim)) {
+      matchData = false
+    }
+
+    return matchTexto && matchArea && matchData
   })
 
   const totalBadges = consultores.reduce((acc, c) => acc + (c.totalBadges || 0), 0)
@@ -53,8 +65,11 @@ export default function Consultores() {
       'Nome': c.nome,
       'Email': c.email,
       'Área': c.nomeArea,
-      'Badges': c.totalBadges,
-      'Pontos': c.totalPontos,
+      'Service Line': c.nomeServiceLine,
+      'Badges Obtidos': c.totalBadges,
+      'Badges Em Processo': c.badgesEmProcesso,
+      'Pontos Totais': c.totalPontos,
+      'Última Atividade': formatarData(c.ultimaAtividade),
     }))
     const ws = XLSX.utils.json_to_sheet(dados)
     const wb = XLSX.utils.book_new()
@@ -68,9 +83,12 @@ export default function Consultores() {
     doc.text('Consultores - Service Line', 14, 15)
     autoTable(doc, {
       startY: 25,
-      head: [['#', 'Nome', 'Área', 'Badges', 'Pontos']],
-      body: filtrados.map(c => [c.posicao, c.nome, c.nomeArea || '-', c.totalBadges, c.totalPontos]),
-      styles: { fontSize: 10 },
+      head: [['#', 'Nome', 'Área', 'Service Line', 'Badges Obtidos', 'Em Processo', 'Pontos', 'Últ. Atividade']],
+      body: filtrados.map(c => [
+        c.posicao, c.nome, c.nomeArea || '-', c.nomeServiceLine || '-',
+        c.totalBadges, c.badgesEmProcesso, c.totalPontos, formatarData(c.ultimaAtividade),
+      ]),
+      styles: { fontSize: 9 },
       headStyles: { fillColor: [57, 99, 156] },
     })
     doc.save('consultores.pdf')
@@ -86,11 +104,11 @@ export default function Consultores() {
             <p style={{ color: '#6b7280', fontSize: 13 }}>{consultores.length} consultores na sua Service Line</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={exportarExcel} style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiDownload /> Exportar Excel
+            <button onClick={exportarExcel} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
+              Exportar Excel
             </button>
-            <button onClick={exportarPDF} style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiDownload /> Exportar PDF
+            <button onClick={exportarPDF} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
+              Exportar PDF
             </button>
           </div>
         </div>
@@ -122,12 +140,12 @@ export default function Consultores() {
           ))}
         </div>
 
-        {/* ── Pesquisa e filtro ── */}
+        {/* ── Pesquisa, filtro de área e período ── */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 2, minWidth: 200 }}>
+          <div style={{ position: 'relative', flex: 2, minWidth: 220 }}>
             <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
             <input
-              placeholder="Pesquisar consultor..."
+              placeholder="Pesquisar Consultor..."
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
               style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, outline: 'none' }}
@@ -138,9 +156,17 @@ export default function Consultores() {
             <option value="todas">Todas as áreas</option>
             {areas.map((a, i) => <option key={i} value={a}>{a}</option>)}
           </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #ddd', borderRadius: 8, padding: '0 12px', minWidth: 260 }}>
+            <FiCalendar style={{ color: '#aaa', flexShrink: 0 }} />
+            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
+              style={{ border: 'none', outline: 'none', fontSize: 12, padding: '10px 4px', color: '#555' }} />
+            <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
+            <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
+              style={{ border: 'none', outline: 'none', fontSize: 12, padding: '10px 4px', color: '#555' }} />
+          </div>
         </div>
 
-        {/* ── Tabela de ranking ── */}
+        {/* ── Tabela de consultores ── */}
         <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           {loading ? (
             <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar...</p>
@@ -151,24 +177,14 @@ export default function Consultores() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    {['#', 'Consultor', 'Área', 'Badges', 'Pontos'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>{h}</th>
+                    {['Consultor', 'Área', 'Service Line', 'Badges Obtidos', 'Badges Em Processo', 'Pontos Totais', 'Última Atividade', 'Ações'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtrados.map((c) => (
                     <tr key={c.idUtilizador} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                      <td style={{ padding: '10px 12px' }}>
-                        <div style={{
-                          width: 24, height: 24, borderRadius: '50%',
-                          background: corMedalha(c.posicao), color: '#fff',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 11, fontWeight: 700,
-                        }}>
-                          {c.posicao}
-                        </div>
-                      </td>
                       <td style={{ padding: '10px 12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{
@@ -185,8 +201,18 @@ export default function Consultores() {
                         </div>
                       </td>
                       <td style={{ padding: '10px 12px', color: '#6b7280' }}>{c.nomeArea || '-'}</td>
+                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{c.nomeServiceLine || '-'}</td>
                       <td style={{ padding: '10px 12px' }}>{c.totalBadges}</td>
+                      <td style={{ padding: '10px 12px' }}>{c.badgesEmProcesso}</td>
                       <td style={{ padding: '10px 12px', fontWeight: 600, color: '#39639C' }}>{c.totalPontos}</td>
+                      <td style={{ padding: '10px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>{formatarData(c.ultimaAtividade)}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <FiEye
+                          title="Ver perfil"
+                          onClick={() => navigate(`/serviceline/consultores/${c.idUtilizador}`)}
+                          style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
