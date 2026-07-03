@@ -9,9 +9,14 @@ import api from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { LuTarget } from 'react-icons/lu'
 import { FaClipboardList, FaMedal, FaStar, FaAward } from 'react-icons/fa'
-import { BiSolidBadge } from "react-icons/bi";
 
 ChartJS.register(ArcElement, Tooltip, Legend)
+
+// vai buscar a foto
+function urlFotoCompleto(urlFoto) {
+  if (!urlFoto) return null
+  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+}
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
@@ -201,7 +206,11 @@ export default function DashboardConsultor() {
                           <div className="dashboard-podio">
                             {podio.map((p) => (
                               <div key={p.posicao} className="dashboard-podio-coluna">
-                                <div className="dashboard-podio-avatar">{p.dados?.nome?.[0] ?? '?'}</div>
+                                <div className="dashboard-podio-avatar">
+                                {p.dados?.urlFoto
+                                ? <img src={urlFotoCompleto(p.dados.urlFoto)} alt={p.dados?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : (p.dados?.nome?.[0] ?? '?')}
+                                </div>
                                 <p className="dashboard-podio-nome">{p.dados?.nome ?? '—'}</p>
                                 <p className="dashboard-podio-pontos">{p.dados?.totalPontos ?? 0} pts</p>
                                 <div className="dashboard-podio-barra" style={{ height: p.altura }} />
@@ -262,7 +271,7 @@ export default function DashboardConsultor() {
                               <div className="badge-recomendado-icone">
                                 {b.urlImagem
                                   ? <img src={`http://localhost:3001/${b.urlImagem}`} alt={b.nome} />
-                                  : <BiSolidBadge  />}
+                                  : '🏅'}
                               </div>
                               <div className="badge-recomendado-info">
                                 <p className="badge-recomendado-nome">{b.nome}</p>

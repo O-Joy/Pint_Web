@@ -13,7 +13,7 @@ function getCoresNivel(nivel) {
   return { bg: '#f0f0f0', color: '#555' }
 }
 
-export default function CardBadge({ b, especial, onInformacoes }) {
+export default function CardBadge({ b, especial, onInfo, onRenovar, corIndicador, textoExpiracao }) {
   const nivel = b.nomeNivel || ''
   const cores = getCoresNivel(nivel)
   const temValidade = !!b.validadeDias
@@ -71,20 +71,22 @@ export default function CardBadge({ b, especial, onInformacoes }) {
         </div>
       )}
 
-      <button onClick={onInformacoes} style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto', width: '100%' }}>
+      <button onClick={onInfo} style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto' }}>
         Informações
       </button>
 
-      {/* Validade */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: -2 }}>
-        <span style={{ fontSize: 10, color: '#9ca3af' }}>
-          {temValidade ? `Válido por ${b.validadeDias} dias` : 'Sem expiração'}
-        </span>
-        <span title={temValidade ? 'Com prazo de validade' : 'Sem prazo de validade'} style={{
-          width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-          background: temValidade ? '#f0b429' : '#22c55e',
-        }} />
-      </div>
+      {onRenovar && (
+        <button onClick={onRenovar} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          Renovar
+        </button>
+      )}
+
+      {corIndicador && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 10, color: '#9ca3af' }}>{textoExpiracao}</span>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: corIndicador, flexShrink: 0 }} />
+        </div>
+      )}
     </div>
   )
 }

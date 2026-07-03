@@ -8,6 +8,12 @@ import { FaMedal } from 'react-icons/fa6'
 import { FaClipboardList } from "react-icons/fa6"
 import { IoGrid } from "react-icons/io5"
 import { LuTarget } from "react-icons/lu"
+
+// A foto pode vir como URL completo ou como caminho relativo do upload
+function urlFotoCompleto(urlFoto) {
+  if (!urlFoto) return null
+  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+}
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { useState } from 'react'
 import LogoutModal from './LogoutModal'
@@ -84,6 +90,7 @@ export default function Sidebar({ navItems, perfil }) {
       {/* Rodapé — fixo na parte inferior */}
       <div style={{
         padding: '1rem 0.75rem',
+        borderTop: '1px solid #d1d5db',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
@@ -95,7 +102,11 @@ export default function Sidebar({ navItems, perfil }) {
         </button>
 
         <NavLink to="/perfil" className="sidebar-user">
-        <div className="sidebar-avatar">{inicial}</div>
+        <div className="sidebar-avatar">
+          {utilizador?.urlFoto
+            ? <img src={urlFotoCompleto(utilizador.urlFoto)} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            : inicial}
+        </div>
         <div className="sidebar-user-info">
             <span className="sidebar-user-name">{utilizador?.nome || 'Utilizador'}</span>
             <span className="sidebar-user-role">{perfil || 'Utilizador'}</span>
