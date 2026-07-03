@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IoIosNotifications } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
+import { getPerfil } from '../utils/auth'
+
+const ROTA_NOTIFICACOES_POR_PERFIL = {
+  consultor: '/consultor/notificacoes',
+  talent_manager: '/talent/notificacoes',
+  sl_leader: '/serviceline/notificacoes',
+  administrador: '/admin/notificacoes',
+}
 
 export default function Topbar() {
   const navigate = useNavigate()
@@ -37,7 +45,7 @@ export default function Topbar() {
           width: '100%',
           maxWidth: '750px', 
           background: '#fff',
-          border: 'none', // <-- Borda removida aqui!
+          border: 'none', 
           borderRadius: '8px',
           padding: '10px 16px',
           display: 'flex',
@@ -65,7 +73,7 @@ export default function Topbar() {
         {/* ÍCONE DE NOTIFICAÇÕES */}
         <button 
           className="topbar-notif-btn" 
-          onClick={() => navigate('/consultor/notificacoes')}
+          onClick={() => navigate(ROTA_NOTIFICACOES_POR_PERFIL[getPerfil()] || '/consultor/notificacoes')}
           style={{
             background: 'none', 
             border: 'none', 

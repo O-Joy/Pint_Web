@@ -25,6 +25,7 @@ import ValidacoesSL from './views/serviceline/Validacoes'
 import Relatorios from './views/serviceline/Relatorios'
 import Gamification from './views/serviceline/Gamification'
 import BadgesSL from './views/serviceline/Badges'
+import NotificacoesSL from './views/serviceline/Notificacoes'
 
 //Talent Manager
 import DashboardTalent from './views/talentmanager/Dashboard'
@@ -143,6 +144,11 @@ function App() {
         <Route path="/serviceline/gamification" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
             <Gamification/>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <NotificacoesSL/>
           </ProtectedRoute>
         } />
 

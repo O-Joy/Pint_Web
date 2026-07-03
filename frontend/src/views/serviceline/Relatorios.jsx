@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
+import Footer from '../../components/Footer'
 import { FiDownload, FiCalendar } from 'react-icons/fi'
 import { MdMilitaryTech, MdPerson, MdStars, MdAccessTime } from 'react-icons/md'
 import * as XLSX from 'xlsx'
@@ -235,8 +236,8 @@ export default function Relatorios() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #e5e7eb', borderRadius: 10, padding: '0 12px', background: '#fff' }}>
-              <FiCalendar style={{ color: '#aaa', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', borderRadius: 10, padding: '0 12px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+              <FiCalendar style={{ color: '#9ca3af', flexShrink: 0 }} />
               <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
                 style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
               <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
@@ -244,8 +245,8 @@ export default function Relatorios() {
                 style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
             </div>
             <select value={nivel} onChange={e => setNivel(e.target.value)} style={{
-              border: '1px solid #e5e7eb', borderRadius: 10, padding: '9px 14px', fontSize: 12,
-              outline: 'none', color: '#555', background: '#fff',
+              background: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 12,
+              outline: 'none', color: '#374151', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)',
             }}>
               {NIVEIS.map(n => <option key={n} value={n}>{n === 'Todos' ? 'Nível - Todos' : n}</option>)}
             </select>
@@ -403,7 +404,7 @@ export default function Relatorios() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 20, fontSize: 11, color: '#aaa' }}>Política de Privacidade e RGPD</div>
+        <Footer />
       </div>
     </LayoutSL>
   )

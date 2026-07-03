@@ -72,6 +72,41 @@ exports.marcarLida = async (req, res) => {
   }
 };
  
+// PUT -> marcar como não lida
+exports.marcarNaoLida = async (req, res) => {
+  const idUtilizador = req.user.idUtilizador;
+  const idNotificacao = parseInt(req.params.id);
+
+  try {
+    const [updated] = await UtilizadorNotificacao.update(
+      { lida: false },
+      { where: { idUtilizador, idNotificacao } }
+    );
+
+    if (updated === 0) {
+      return res.status(404).json({ error: 'Notificação não encontrada.' });
+    }
+
+    res.json({ message: 'Notificação marcada como não lida.' });
+  } catch (err) {
+    console.error('Erro ao marcar notificação como não lida:', err);
+    res.status(500).json({ error: 'Erro ao marcar como não lida.' });
+  }
+};
+
+// PUT -> marcar todas como lidas
+exports.marcarTodasLidas = async (req, res) => {
+  const idUtilizador = req.user.idUtilizador;
+
+  try {
+    await UtilizadorNotificacao.update({ lida: true }, { where: { idUtilizador } });
+    res.json({ message: 'Todas as notificações foram marcadas como lidas.' });
+  } catch (err) {
+    console.error('Erro ao marcar todas como lidas:', err);
+    res.status(500).json({ error: 'Erro ao marcar todas como lidas.' });
+  }
+};
+
 // DELETE /api/notificacoes/:id
 // Remove a ligação entre o utilizador e a notificação (não apaga a notificação global)
 exports.eliminarNotificacao = async (req, res) => {

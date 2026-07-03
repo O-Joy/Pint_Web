@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
+import Footer from '../../components/Footer'
 import { MdAssignment, MdPerson, MdMilitaryTech } from 'react-icons/md'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
@@ -24,7 +25,7 @@ export default function DashboardServiceLine() {
       // 6 consultores para o "Progresso dos Consultores" (2 colunas x 3 linhas)
       setConsultores(dados.slice(0, 6).map(c => ({
         nome: c.nome,
-        progresso: c.totalBadges > 0 ? Math.min(c.totalBadges * 10, 100) : 10,
+        progresso: c.progresso ?? 0,
       })))
     }).catch(() => {})
 
@@ -108,8 +109,8 @@ export default function DashboardServiceLine() {
               data={{
                 labels: dadosGrafico.map(d => d.mes),
                 datasets: [
-                  { label: '12/25', data: dadosGrafico.map(d => d.aprovadas), backgroundColor: '#7dd8f0', borderRadius: 4, barThickness: 10 },
-                  { label: '01/25', data: dadosGrafico.map(d => d.rejeitadas), backgroundColor: '#7eecd4', borderRadius: 4, barThickness: 10 },
+                  { label: 'Aprovadas',  data: dadosGrafico.map(d => d.aprovadas),  backgroundColor: '#7dd8f0', borderRadius: 4, barThickness: 10 },
+                  { label: 'Rejeitadas', data: dadosGrafico.map(d => d.rejeitadas), backgroundColor: '#7eecd4', borderRadius: 4, barThickness: 10 },
                 ],
               }}
               options={{
@@ -204,9 +205,7 @@ export default function DashboardServiceLine() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 12, fontSize: 11, color: '#aaa' }}>
-          Política de Privacidade e RGPD
-        </div>
+        <Footer />
 
       </div>
     </LayoutSL>

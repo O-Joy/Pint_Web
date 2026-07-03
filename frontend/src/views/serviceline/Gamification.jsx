@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
-import { FiDownload } from 'react-icons/fi'
+import Footer from '../../components/Footer'
+import { FiDownload, FiSearch } from 'react-icons/fi'
 import { MdInsertChartOutlined } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -59,12 +60,21 @@ const StatCard = ({ title, children }) => {
 export default function Gamification() {
   const [consultores, setConsultores] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filtro, setFiltro] = useState('')
+  const [estatisticas, setEstatisticas] = useState({
+    crescimentoMedio: 0, novosConsultoresMes: 0, badgesAprovadosVariacao: 0,
+    maiorSubida: [], menorProgresso: [], maiorConsistencia: [], progressoPorArea: [],
+  })
 
     useEffect(() => {
         api.get('/sl/gamification/todos') // <- Mudei aqui!
         .then(res => setConsultores(Array.isArray(res.data) ? res.data : []))
         .catch((err) => console.error("Erro ao carregar ranking global:", err)) // Adicionei um console.error para te ajudar a ver erros caso a rota falhe
         .finally(() => setLoading(false))
+
+        api.get('/sl/gamification/estatisticas')
+        .then(res => setEstatisticas(res.data || {}))
+        .catch((err) => console.error("Erro ao carregar estatísticas de gamification:", err))
     }, [])
 
   const ranking = consultores.map((c, i) => {
@@ -82,8 +92,10 @@ export default function Gamification() {
   const melhorPontuacao = ranking.length > 0 ? ranking[0].totalPontos : 0
   const totalBadgesAprovados = ranking.reduce((acc, c) => acc + (c.totalBadges || 0), 0)
 
+  const rankingFiltrado = ranking.filter(c => c.nome?.toLowerCase().includes(filtro.toLowerCase()))
+
   const exportarExcel = () => {
-    const dados = ranking.map(c => ({
+    const dados = rankingFiltrado.map(c => ({
       'Posição': c.posicao,
       'Consultor': c.nome,
       'Pontos': c.totalPontos,
@@ -102,7 +114,7 @@ export default function Gamification() {
     autoTable(doc, {
       startY: 25,
       head: [['Posição', 'Consultor', 'Pontos', 'Evolução']],
-      body: ranking.map(c => [c.posicao, c.nome, c.totalPontos, c.evolucao]),
+      body: rankingFiltrado.map(c => [c.posicao, c.nome, c.totalPontos, c.evolucao]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [57, 99, 156] },
     })
@@ -126,17 +138,23 @@ export default function Gamification() {
           </div>
         </div>
 
-        <div style={{ background: '#fff', padding: '12px 16px', borderRadius: 8, border: '1px solid #eee', width: '400px', marginBottom: 24, color: '#aaa', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <span style={{ marginRight: 8 }}></span> Pesquisar Consultor, Badge, Requisito...
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', width: 400, maxWidth: '100%', marginBottom: 24, boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+          <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
+          <input
+            value={filtro}
+            onChange={e => setFiltro(e.target.value)}
+            placeholder="Pesquisar Consultor..."
+            style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }}
+          />
         </div>
 
         {/* ── KPIs ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
-            { label: 'MELHOR PONTUAÇÃO', valor: melhorPontuacao, sub: '+30 ESTE MÊS' },
-            { label: 'CRESCIMENTO MÉDIO', valor: '12%', sub: '+12% ESTE MÊS' },
-            { label: 'TOTAL CONSULTORES', valor: consultores.length, sub: '+2 ESTE MÊS' },
-            { label: 'BADGES APROVADOS', valor: totalBadgesAprovados, sub: '+15 ESTE MÊS' },
+            { label: 'MELHOR PONTUAÇÃO', valor: melhorPontuacao, sub: null },
+            { label: 'CRESCIMENTO MÉDIO', valor: `${estatisticas.crescimentoMedio}%`, sub: null },
+            { label: 'TOTAL CONSULTORES', valor: consultores.length, sub: `+${estatisticas.novosConsultoresMes} ESTE MÊS` },
+            { label: 'BADGES APROVADOS', valor: totalBadgesAprovados, sub: `${estatisticas.badgesAprovadosVariacao > 0 ? '+' : ''}${estatisticas.badgesAprovadosVariacao}% ESTE MÊS` },
           ].map((kpi, i) => (
             <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
               <div style={{ width: 40, height: 40, background: '#f0f4f8', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#39639C', fontSize: 20 }}>
@@ -145,7 +163,7 @@ export default function Gamification() {
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e' }}>{kpi.valor}</div>
                 <div style={{ fontSize: 10, color: '#666', fontWeight: 600 }}>{kpi.label}</div>
-                <div style={{ fontSize: 9, color: '#a0a0a0', marginTop: 2 }}>{kpi.sub}</div>
+                {kpi.sub && <div style={{ fontSize: 9, color: '#a0a0a0', marginTop: 2 }}>{kpi.sub}</div>}
               </div>
             </div>
           ))}
@@ -210,10 +228,10 @@ export default function Gamification() {
             <div style={{ height: 180 }}>
               <Line 
                 data={{
-                  labels: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN'],
+                  labels: estatisticas.evolucaoPontos?.map(e => e.mes.toUpperCase()) || [],
                   datasets: [{
                     label: 'Pontos',
-                    data: [2500, 6000, 4500, 8800, 5500, 7200],
+                    data: estatisticas.evolucaoPontos?.map(e => e.total) || [],
                     borderColor: '#06b6d4',
                     backgroundColor: '#06b6d4',
                     tension: 0.4,
@@ -244,6 +262,8 @@ export default function Gamification() {
           <div style={{ background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
              {loading ? (
                 <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar ranking...</p>
+              ) : rankingFiltrado.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#aaa' }}>Nenhum consultor encontrado.</p>
               ) : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
@@ -255,7 +275,7 @@ export default function Gamification() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ranking.map((c) => (
+                    {rankingFiltrado.map((c) => (
                       <tr 
                         key={c.idUtilizador} 
                         style={{ 
@@ -301,41 +321,41 @@ export default function Gamification() {
             <h4 style={{ fontSize: 14, fontWeight: 700, color: '#39639C', margin: '0 0 -8px 0', textTransform: 'uppercase' }}>Outras Estatísticas</h4>
             
             {/* Top 3 Maior Subida */}
-            <StatCard title="TOP 3: MAIOR SUBIDA">
-              {top3.map((c, i) => (
+            <StatCard title="TOP 3: MAIOR SUBIDA ESTE MÊS">
+              {(estatisticas.maiorSubida?.length ? estatisticas.maiorSubida : top3).map((c, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: i !== 2 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontWeight: 600, color: '#39639C' }}>{i + 1}º</span>
                     <span style={{ color: '#333' }}>{c.nome}</span>
                   </div>
-                  <span style={{ color: '#22c55e', fontWeight: 600 }}>+3</span>
+                  <span style={{ color: '#22c55e', fontWeight: 600 }}>+{c.pontosMesAtual ?? 0}</span>
                 </div>
               ))}
             </StatCard>
 
-            {/* Top 3 Maior Descida */}
-            <StatCard title="TOP 3: MAIOR DESCIDA">
-              {top3.map((c, i) => (
+            {/* Top 3 Menor Progresso */}
+            <StatCard title="TOP 3: MENOR PROGRESSO ESTE MÊS">
+              {(estatisticas.menorProgresso?.length ? estatisticas.menorProgresso : top3).map((c, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: i !== 2 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#e2e8f0', fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.nome?.[0]}</div>
                     <span style={{ color: '#333' }}>{c.nome}</span>
                   </div>
-                  <span style={{ color: '#ef4444', fontWeight: 600 }}>-20</span>
+                  <span style={{ color: '#94a3b8', fontWeight: 600 }}>+{c.pontosMesAtual ?? 0}</span>
                 </div>
               ))}
             </StatCard>
 
              {/* Top 3 Consistência */}
              <StatCard title="TOP 3: CONSISTÊNCIA DE EQUIPA">
-              {top3.map((c, i) => (
+              {(estatisticas.maiorConsistencia?.length ? estatisticas.maiorConsistencia : top3).map((c, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, padding: '8px 0', borderBottom: i !== 2 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontWeight: 600, color: '#39639C' }}>{i + 1}º</span>
                     <span style={{ color: '#333' }}>{c.nome}</span>
                   </div>
                   <div style={{ textAlign: 'center', lineHeight: 1 }}>
-                    <span style={{ color: '#06b6d4', fontWeight: 600 }}>{6 - i}</span><br/>
+                    <span style={{ color: '#06b6d4', fontWeight: 600 }}>{c.streak ?? 0}</span><br/>
                     <span style={{ fontSize: 8, color: '#94a3b8' }}>Meses</span>
                   </div>
                 </div>
@@ -344,22 +364,26 @@ export default function Gamification() {
 
             {/* Progresso da Equipa por Área */}
             <StatCard title="PROGRESSO DA EQUIPA POR ÁREA">
-              {['Jornada Técnica', 'Application Operations', 'Power Skills'].map((area, i) => (
-                <div key={i} style={{ marginBottom: i !== 2 ? 14 : 0 }}>
+              {(estatisticas.progressoPorArea?.length ? estatisticas.progressoPorArea : []).map((a, i) => (
+                <div key={i} style={{ marginBottom: i !== (estatisticas.progressoPorArea.length - 1) ? 14 : 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 6 }}>
-                    <span style={{ color: '#333', fontWeight: 500 }}>{i+1}º {area}</span>
-                    <span style={{ color: '#94a3b8', fontWeight: 500 }}>29850 PTS</span>
+                    <span style={{ color: '#333', fontWeight: 500 }}>{i + 1}º {a.nomeArea}</span>
+                    <span style={{ color: '#94a3b8', fontWeight: 500 }}>{a.totalPontos} PTS</span>
                   </div>
                   <div style={{ width: '100%', height: 6, background: '#f1f5f9', borderRadius: 4 }}>
-                    <div style={{ width: `${80 - (i * 10)}%`, height: '100%', background: '#06b6d4', borderRadius: 4 }}></div>
+                    <div style={{ width: `${a.percentagem}%`, height: '100%', background: '#06b6d4', borderRadius: 4 }}></div>
                   </div>
                 </div>
               ))}
+              {!estatisticas.progressoPorArea?.length && (
+                <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>Sem dados disponíveis.</p>
+              )}
             </StatCard>
 
           </div>
         </div>
 
+        <Footer />
       </div>
     </LayoutSL>
   )

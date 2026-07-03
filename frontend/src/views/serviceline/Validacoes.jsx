@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
+import Footer from '../../components/Footer'
 import { FiSearch, FiEye } from 'react-icons/fi'
 import { FaReply, FaPaperPlane } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
@@ -42,7 +43,9 @@ export default function Validacoes() {
 
   function carregar() {
     setLoading(true)
-    api.get('/sl/candidaturas-em-validacao')
+    // relCandidaturas devolve TODAS as candidaturas da SL (pendentes, aprovadas e rejeitadas),
+    // o que permite às tabs TODOS/APROVADOS/REJEITADOS filtrarem de facto.
+    api.get('/sl/relatorios/candidaturas')
       .then(res => setCandidaturas(Array.isArray(res.data) ? res.data : []))
       .catch(err => console.error('[Validacoes] ERRO:', err.response?.status, err.response?.data || err.message))
       .finally(() => setLoading(false))
@@ -104,6 +107,9 @@ export default function Validacoes() {
   // ── Filtragem ──
   const niveis = [...new Set(candidaturas.map(c => c.nomeNivel).filter(Boolean))]
 
+  // Contagem de pendentes (Em Validação SLL) — independente do tab selecionado, para o subtítulo
+  const pendentesCount = candidaturas.filter(c => c.idEstadoAtual === 3).length
+
   const filtradas = candidaturas.filter(c => {
     const termo = filtro.toLowerCase()
     const matchTermo =
@@ -111,8 +117,18 @@ export default function Validacoes() {
       c.nomeBadge?.toLowerCase().includes(termo) ||
       String(c.numCandidatura).includes(termo)
     const matchNivel = filtroNivel === 'todos' || c.nomeNivel === filtroNivel
-    return matchTermo && matchNivel
+    const matchTab =
+      tab === 'todos' ? true :
+      tab === 'aprovados' ? c.idEstadoAtual === 5 :
+      tab === 'rejeitados' ? c.idEstadoAtual === 6 : true
+    return matchTermo && matchNivel && matchTab
   })
+
+  // Horas decorridas desde a submissão (só faz sentido para candidaturas ainda pendentes)
+  function horasDecorridas(dataCriacao) {
+    const horas = Math.round((Date.now() - new Date(dataCriacao).getTime()) / (1000 * 60 * 60))
+    return horas
+  }
 
   // ── Exportações ──
   function exportarExcel() {
@@ -122,28 +138,28 @@ export default function Validacoes() {
       'Badge': c.nomeBadge,
       'Nível': c.nomeNivel,
       'Data Submissão': new Date(c.dataCriacao).toLocaleDateString('pt-PT'),
-      'Estado': 'Em Validação',
+      'Estado': c.nomeEstado,
     }))
     const ws = XLSX.utils.json_to_sheet(dados)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Validações')
-    XLSX.writeFile(wb, 'validacoes_pendentes.xlsx')
+    XLSX.writeFile(wb, 'validacoes.xlsx')
   }
 
   function exportarPDF() {
     const doc = new jsPDF()
     doc.setFontSize(14)
-    doc.text('Pedidos Pendentes - Validações', 14, 16)
+    doc.text('Validações - Service Line', 14, 16)
     autoTable(doc, {
       startY: 22,
       head: [['ID', 'Consultor', 'Badge', 'Nível', 'Data', 'Estado']],
       body: filtradas.map(c => [
         c.numCandidatura, c.nomeConsultor, c.nomeBadge, c.nomeNivel,
-        new Date(c.dataCriacao).toLocaleDateString('pt-PT'), 'Em Validação',
+        new Date(c.dataCriacao).toLocaleDateString('pt-PT'), c.nomeEstado,
       ]),
       headStyles: { fillColor: [57, 99, 156] },
     })
-    doc.save('validacoes_pendentes.pdf')
+    doc.save('validacoes.pdf')
   }
 
   return (
@@ -155,7 +171,7 @@ export default function Validacoes() {
           <div>
             <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Validações</h2>
             <p style={{ color: '#39639C', fontWeight: 600, fontSize: 14, margin: '4px 0 0' }}>Pedidos Pendentes</p>
-            <p style={{ color: '#9ca3af', fontSize: 12, margin: '2px 0 0' }}>{filtradas.length} PEDIDOS</p>
+            <p style={{ color: '#9ca3af', fontSize: 12, margin: '2px 0 0' }}>{pendentesCount} PEDIDOS</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={exportarExcel} style={btnExport}>Exportar Excel</button>
@@ -165,8 +181,8 @@ export default function Validacoes() {
 
         {/* ── Filtros ── */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '16px 0', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 240, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 12px' }}>
-            <FiSearch style={{ color: '#9ca3af' }} />
+          <div style={{ flex: 1, minWidth: 240, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+            <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
             <input
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
@@ -203,12 +219,12 @@ export default function Validacoes() {
         </div>
 
         {/* ── Tabela ── */}
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0px 0px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
+        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 5px 40px rgba(237,237,237,1)', overflowX: 'auto' }}>
           {loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>A carregar...</div>
           ) : filtradas.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#6b7280', fontSize: 14 }}>
-              Não há candidaturas para validar de momento.
+              {tab === 'todos' ? 'Não há candidaturas para mostrar.' : `Não há candidaturas ${tab} de momento.`}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
@@ -220,39 +236,52 @@ export default function Validacoes() {
                 </tr>
               </thead>
               <tbody>
-                {filtradas.map((c, i) => (
-                  <tr key={c.numCandidatura} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                    <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.numCandidatura}</td>
-                    <td style={{ padding: '11px 14px', fontWeight: 500, color: '#1a1a2e' }}>{c.nomeConsultor}</td>
-                    <td style={{ padding: '11px 14px', color: '#39639C' }}>{c.nomeBadge}</td>
-                    <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.nomeNivel}</td>
-                    <td style={{ padding: '11px 14px', color: '#6b7280' }}>{new Date(c.dataCriacao).toLocaleDateString('pt-PT')}</td>
-                    <td style={{ padding: '11px 14px' }}>
-                      <span style={{ color: '#06A120', fontWeight: 600 }}>48h ●</span>
-                    </td>
-                    <td style={{ padding: '11px 14px' }}>
-                      <span style={{ background: '#dbeafe', color: '#1d4ed8', borderRadius: 12, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        Em Validação
-                      </span>
-                    </td>
-                    <td style={{ padding: '11px 14px' }}>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <FiEye title="Ver detalhe" onClick={() => abrirDetalhe(c)} style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }} />
-                        <FaReply title="Devolver" onClick={() => { abrirDetalhe(c); setTimeout(() => setConfirmacao({ tipo: 'devolver' }), 50) }} style={{ cursor: 'pointer', color: '#f59e0b', fontSize: 15 }} />
-                        <FaPaperPlane title="Validar" onClick={() => { abrirDetalhe(c); setTimeout(() => setConfirmacao({ tipo: 'validar' }), 50) }} style={{ cursor: 'pointer', color: '#39639C', fontSize: 15 }} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filtradas.map((c, i) => {
+                  const pendente = c.idEstadoAtual === 3
+                  const acionavel = c.idEstadoAtual === 3 || c.idEstadoAtual === 4
+                  const horas = pendente ? horasDecorridas(c.dataCriacao) : null
+                  const corSla = horas === null ? '#9ca3af' : horas <= 48 ? '#06A120' : horas <= 72 ? '#f59e0b' : '#AE0003'
+                  return (
+                    <tr key={c.numCandidatura} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.numCandidatura}</td>
+                      <td style={{ padding: '11px 14px', fontWeight: 500, color: '#1a1a2e' }}>{c.nomeConsultor}</td>
+                      <td style={{ padding: '11px 14px', color: '#39639C' }}>{c.nomeBadge}</td>
+                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.nomeNivel}</td>
+                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{new Date(c.dataCriacao).toLocaleDateString('pt-PT')}</td>
+                      <td style={{ padding: '11px 14px' }}>
+                        <span style={{ color: corSla, fontWeight: 600 }}>{horas === null ? '—' : `${horas}h ●`}</span>
+                      </td>
+                      <td style={{ padding: '11px 14px' }}>
+                        <span style={{
+                          background: corEstado[c.nomeEstado]?.bg ?? '#f3f4f6',
+                          color: corEstado[c.nomeEstado]?.color ?? '#6b7280',
+                          borderRadius: 12, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                        }}>
+                          {c.nomeEstado}
+                        </span>
+                      </td>
+                      <td style={{ padding: '11px 14px' }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <FiEye title="Ver detalhe" onClick={() => abrirDetalhe(c)} style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }} />
+                          {acionavel && (
+                            <>
+                              <FaReply title="Devolver" onClick={() => { abrirDetalhe(c); setTimeout(() => setConfirmacao({ tipo: 'devolver' }), 50) }} style={{ cursor: 'pointer', color: '#f59e0b', fontSize: 15 }} />
+                              <FaPaperPlane title="Validar" onClick={() => { abrirDetalhe(c); setTimeout(() => setConfirmacao({ tipo: 'validar' }), 50) }} style={{ cursor: 'pointer', color: '#39639C', fontSize: 15 }} />
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
         </div>
 
-        <div style={{ textAlign: 'right', marginTop: 12, fontSize: 11, color: '#aaa' }}>Política de Privacidade e RGPD</div>
+        <Footer />
       </div>
 
-      {/* ════════ MODAL DE DETALHE ════════ */}
       {selecionada && !confirmacao && (
         <Overlay onClose={fecharDetalhe}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 560, maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
@@ -325,7 +354,6 @@ export default function Validacoes() {
         </Overlay>
       )}
 
-      {/* ════════ MODAL DE CONFIRMAÇÃO ════════ */}
       {confirmacao && (
         <Overlay onClose={() => setConfirmacao(null)}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 420, position: 'relative' }}>
@@ -346,7 +374,6 @@ export default function Validacoes() {
         </Overlay>
       )}
 
-      {/* ════════ TOAST ════════ */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
@@ -377,9 +404,18 @@ function Overlay({ children, onClose }) {
 }
 
 // ── Estilos reutilizados ──
-const btnExport = { background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 500, color: '#39639C', cursor: 'pointer' }
-const selectStyle = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer' }
+const btnExport = { background: '#fff', border: '1.5px solid #39639C', borderRadius: 12, padding: '8px 16px', fontSize: 13, fontWeight: 500, color: '#39639C', cursor: 'pointer' }
+const selectStyle = { background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }
 const infoBox = { background: '#f9fafb', borderRadius: 8, padding: '10px 12px' }
 const subTitulo = { fontSize: 12, fontWeight: 600, color: '#374151', margin: '0 0 8px' }
 const acaoBtn = { border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }
 const fecharBtn = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
+
+const corEstado = {
+  'Aprovada':           { bg: '#dcfce7', color: '#16a34a' },
+  'Rejeitada':          { bg: '#fee2e2', color: '#dc2626' },
+  'Em Validação SLL':   { bg: '#dbeafe', color: '#1d4ed8' },
+  'Em Validação TM':    { bg: '#e0e7ff', color: '#4338ca' },
+  'Em Retificação SLL': { bg: '#fef3c7', color: '#d97706' },
+  'Submetido':          { bg: '#f3f4f6', color: '#6b7280' },
+}

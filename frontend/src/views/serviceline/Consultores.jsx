@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
+import Footer from '../../components/Footer'
 import { FiSearch, FiEye, FiCalendar } from 'react-icons/fi'
 import { MdMilitaryTech, MdPerson } from 'react-icons/md'
 import * as XLSX from 'xlsx'
@@ -100,7 +101,7 @@ export default function Consultores() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
           <div>
-            <h2 style={{ color: '#39639C', fontWeight: 700, marginBottom: 2 }}>Consultores</h2>
+            <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Consultores</h2>
             <p style={{ color: '#6b7280', fontSize: 13 }}>{consultores.length} consultores na sua Service Line</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -142,22 +143,21 @@ export default function Consultores() {
 
         {/* ── Pesquisa, filtro de área e período ── */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: 2, minWidth: 220 }}>
-            <FiSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }} />
+          <div style={{ flex: 2, minWidth: 220, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+            <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
             <input
               placeholder="Pesquisar Consultor..."
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, outline: 'none' }}
+              style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }}
             />
           </div>
-          <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)}
-            style={{ flex: 1, minWidth: 150, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, outline: 'none', color: '#555' }}>
+          <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)} style={selectStyle}>
             <option value="todas">Todas as áreas</option>
             {areas.map((a, i) => <option key={i} value={a}>{a}</option>)}
           </select>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #ddd', borderRadius: 8, padding: '0 12px', minWidth: 260 }}>
-            <FiCalendar style={{ color: '#aaa', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', borderRadius: 10, padding: '0 12px', minWidth: 260, boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+            <FiCalendar style={{ color: '#9ca3af', flexShrink: 0 }} />
             <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
               style={{ border: 'none', outline: 'none', fontSize: 12, padding: '10px 4px', color: '#555' }} />
             <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
@@ -221,7 +221,10 @@ export default function Consultores() {
           )}
         </div>
 
+        <Footer />
       </div>
     </LayoutSL>
   )
 }
+
+const selectStyle = { flex: 1, minWidth: 150, background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }

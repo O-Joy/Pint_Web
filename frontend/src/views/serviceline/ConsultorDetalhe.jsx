@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
+import Footer from '../../components/Footer'
 import { FiRefreshCw, FiChevronLeft } from 'react-icons/fi'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -142,7 +143,7 @@ export default function ConsultorDetalhe() {
           </p>
           <FiRefreshCw title="Atualizar" onClick={carregar} style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }} />
         </div>
-        <h2 style={{ color: '#39639C', fontWeight: 700, marginBottom: 20 }}>Perfil Consultor</h2>
+        <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: '0 0 20px' }}>Perfil Consultor</h2>
 
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
 
@@ -257,6 +258,7 @@ export default function ConsultorDetalhe() {
           )}
         </div>
 
+        <Footer />
       </div>
     </LayoutSL>
   )

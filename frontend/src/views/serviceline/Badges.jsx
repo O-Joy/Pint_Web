@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
-import { FiSearch, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import Footer from '../../components/Footer'
+import { FiSearch, FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiFlag } from 'react-icons/fi'
 import { FaBolt } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -12,6 +13,15 @@ import autoTable from 'jspdf-autotable'
 import CardBadge from '../../components/CardBadge'
 
 const POR_PAGINA = 8
+
+const corEstadoHistorico = {
+  'Aprovada':           { bg: '#dcfce7', color: '#16a34a' },
+  'Rejeitada':          { bg: '#fee2e2', color: '#dc2626' },
+  'Em Validação SLL':   { bg: '#dbeafe', color: '#1d4ed8' },
+  'Em Validação TM':    { bg: '#e0e7ff', color: '#4338ca' },
+  'Em Retificação SLL': { bg: '#fef3c7', color: '#d97706' },
+  'Submetido':          { bg: '#f3f4f6', color: '#6b7280' },
+}
 
 export default function Badges() {
   const [regulares, setRegulares]   = useState([])
@@ -30,6 +40,8 @@ export default function Badges() {
   const [selecionado, setSelecionado]   = useState(null)
   const [requisitos, setRequisitos]     = useState([])
   const [loadingReq, setLoadingReq]     = useState(false)
+  const [aberto, setAberto]             = useState(null) // índice do requisito expandido no acordeão
+  const [certificadoMarcado, setCertificadoMarcado] = useState(false)
 
   // Histórico
   const [historico, setHistorico]       = useState([])
@@ -50,9 +62,11 @@ export default function Badges() {
   }, [])
 
   function abrirModal(badge) {
-    if (badge.especial) return // especiais não têm requisitos
     setSelecionado(badge)
     setRequisitos([])
+    setAberto(null)
+    setCertificadoMarcado(false)
+    if (badge.especial) return // especiais não têm requisitos — mostra só descrição + certificado
     setLoadingReq(true)
     api.get(`/sl/badges/${badge.id}/requisitos`)
       .then(res => setRequisitos(Array.isArray(res.data) ? res.data : []))
@@ -60,7 +74,26 @@ export default function Badges() {
       .finally(() => setLoadingReq(false))
   }
 
-  function fecharModal() { setSelecionado(null); setRequisitos([]) }
+  function fecharModal() { setSelecionado(null); setRequisitos([]); setAberto(null); setCertificadoMarcado(false) }
+
+  // Gera um certificado genérico do badge em PDF (pré-visualização — o certificado real é emitido quando o badge é atribuído)
+  function gerarCertificado(badge) {
+    const doc = new jsPDF({ orientation: 'landscape' })
+    const largura = doc.internal.pageSize.getWidth()
+    doc.setFillColor(57, 99, 156)
+    doc.rect(0, 0, largura, 12, 'F')
+    doc.setFontSize(22)
+    doc.setTextColor(26, 26, 46)
+    doc.text('Certificado de Badge', largura / 2, 45, { align: 'center' })
+    doc.setFontSize(16)
+    doc.text(badge.nome, largura / 2, 62, { align: 'center' })
+    doc.setFontSize(11)
+    doc.setTextColor(107, 114, 128)
+    doc.text(badge.descricao || '', largura / 2, 74, { align: 'center', maxWidth: largura - 60 })
+    doc.text(`${badge.pontos ?? 0} pontos · Emitido pela Softinsa`, largura / 2, 95, { align: 'center' })
+    doc.text(new Date().toLocaleDateString('pt-PT'), largura / 2, 103, { align: 'center' })
+    doc.save(`certificado_${badge.nome.replace(/\s+/g, '_')}.pdf`)
+  }
 
   // Listas de valores únicos para filtros
   const servicelines = [...new Set(regulares.map(b => b.nomeServiceLine).filter(Boolean))]
@@ -85,10 +118,10 @@ export default function Badges() {
     return b.nome?.toLowerCase().includes(termo) || b.descricao?.toLowerCase().includes(termo)
   })
 
-  // Histórico filtrado por tab
+  // Histórico filtrado por tab (idEstadoAtual: 5 = Aprovada/Obtido; 1-4 = ainda em processo)
   const historicoFiltrado = historico.filter(h => {
-    if (tabHistorico === 'OBTIDOS')    return h.estado === 'Obtido'
-    if (tabHistorico === 'EM PROCESSO') return h.estado !== 'Obtido'
+    if (tabHistorico === 'OBTIDOS')    return h.idEstadoAtual === 5
+    if (tabHistorico === 'EM PROCESSO') return h.idEstadoAtual !== 5 && h.idEstadoAtual !== 6
     return true
   })
 
@@ -193,7 +226,7 @@ export default function Badges() {
                 <div style={{ color: '#9ca3af', fontSize: 14 }}>Nenhum badge especial disponível.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-                  {especiaisFiltrados.map(b => <CardBadge key={b.id} b={b} especial />)}
+                  {especiaisFiltrados.map(b => <CardBadge key={b.id} b={b} especial onInformacoes={() => abrirModal(b)} />)}
                 </div>
               )}
             </div>
@@ -226,7 +259,13 @@ export default function Badges() {
                           <td style={{ padding: '11px 16px', color: '#6b7280' }}>{h.nomeNivel}</td>
                           <td style={{ padding: '11px 16px', color: '#6b7280' }}>{h.nomeConsultor}</td>
                           <td style={{ padding: '11px 16px' }}>
-                            <span style={{ color: h.estado === 'Obtido' ? '#06A120' : '#6b7280', fontWeight: h.estado === 'Obtido' ? 600 : 400 }}>{h.estado}</span>
+                            <span style={{
+                              background: corEstadoHistorico[h.nomeEstado]?.bg ?? '#f3f4f6',
+                              color: corEstadoHistorico[h.nomeEstado]?.color ?? '#6b7280',
+                              borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                            }}>
+                              {h.nomeEstado || '-'}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -238,43 +277,118 @@ export default function Badges() {
           </>
         )}
 
-        <div style={{ textAlign: 'right', marginTop: 16, fontSize: 11, color: '#aaa' }}>Política de Privacidade e RGPD</div>
+        <Footer />
       </div>
 
-      {/* ════════ MODAL REQUISITOS ════════ */}
+      {/* ════════ MODAL INFORMAÇÕES DO BADGE ════════ */}
       {selecionado && (
         <Overlay onClose={fecharModal}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 500, maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={fecharModal} style={fecharBtn}>×</button>
-            <h3 style={{ fontWeight: 700, fontSize: 18, color: '#1a1a2e', margin: '0 0 4px' }}>{selecionado.nome}</h3>
-            <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 18px' }}>{selecionado.descricao}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-              <div style={infoBox}>
-                <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Nível</div>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{selecionado.nomeNivel || '-'}</div>
+
+            {/* Cabeçalho: ícone + nome + tag de nível/especial */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 10, background: '#eef3fa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {selecionado.urlImagem
+                  ? <img src={`http://localhost:3001/${selecionado.urlImagem}`} alt={selecionado.nome} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  : <span style={{ fontSize: 26 }}>{selecionado.especial ? '⭐' : '🏅'}</span>}
               </div>
-              <div style={infoBox}>
-                <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Pontos</div>
-                <div style={{ fontWeight: 600, fontSize: 13, color: '#11a9d6', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <FaBolt /> {selecionado.pontos ?? 0}
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h3 style={{ fontWeight: 700, fontSize: 17, color: '#1a1a2e', margin: 0 }}>{selecionado.nome}</h3>
+                  <span style={{
+                    background: selecionado.especial ? '#f3f4f6' : '#FFF3E0',
+                    color: selecionado.especial ? '#6b7280' : '#F57C00',
+                    borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 600,
+                  }}>
+                    {selecionado.especial ? 'Especial' : (selecionado.nomeNivel || '-')}
+                  </span>
                 </div>
+                <p style={{ fontSize: 12, color: '#6b7280', margin: '6px 0 0', lineHeight: 1.5 }}>{selecionado.descricao || 'Sem descrição.'}</p>
               </div>
             </div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '0 0 10px' }}>Requisitos:</p>
-            {loadingReq ? (
-              <p style={{ fontSize: 12, color: '#9ca3af' }}>A carregar...</p>
-            ) : requisitos.length === 0 ? (
-              <p style={{ fontSize: 12, color: '#9ca3af' }}>Sem requisitos definidos.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {requisitos.map((r, i) => (
-                  <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px' }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: '#1a1a2e', marginBottom: 4 }}>{i + 1}. {r.nome}</div>
-                    {r.descricao && <div style={{ fontSize: 12, color: '#6b7280' }}>{r.descricao}</div>}
-                  </div>
-                ))}
+
+            {/* Breadcrumb + pontos */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0', marginBottom: 18 }}>
+              <span style={{ fontSize: 12, color: '#6b7280' }}>
+                {[selecionado.nomeServiceLine, selecionado.nomeArea].filter(Boolean).join(' · ') || 'Badge Especial'}
+              </span>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#11a9d6', fontWeight: 700, fontSize: 13 }}>
+                  <FaBolt /> {selecionado.pontos ?? 0} pontos
+                </div>
+                <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>Definido Pelo Administrador</div>
               </div>
+            </div>
+
+            {selecionado.especial ? (
+              /* ── Badge Especial: sem requisitos, botão de certificado ── */
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={certificadoMarcado}
+                  onChange={() => { setCertificadoMarcado(true); gerarCertificado(selecionado) }}
+                  style={{ width: 16, height: 16, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Descarregar Certificado</span>
+              </label>
+            ) : (
+              /* ── Badge Regular: acordeão de requisitos ── */
+              <>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '0 0 10px' }}>Requisitos:</p>
+                {loadingReq ? (
+                  <p style={{ fontSize: 12, color: '#9ca3af' }}>A carregar...</p>
+                ) : requisitos.length === 0 ? (
+                  <p style={{ fontSize: 12, color: '#9ca3af' }}>Sem requisitos definidos.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {requisitos.map((r, i) => {
+                      const expandido = aberto === i
+                      return (
+                        <div key={r.id ?? i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+                          <button
+                            onClick={() => setAberto(expandido ? null : i)}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                              padding: '10px 14px', background: '#fff', border: 'none', cursor: 'pointer', textAlign: 'left',
+                            }}
+                          >
+                            <span style={{
+                              width: 22, height: 22, borderRadius: 6, background: '#fee2e2', color: '#dc2626',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11,
+                            }}>
+                              <FiFlag />
+                            </span>
+                            <span style={{ flex: 1, fontWeight: 600, fontSize: 13, color: '#1a1a2e' }}>
+                              Requisito {r.nome}
+                            </span>
+                            {expandido ? <FiChevronUp color="#9ca3af" /> : <FiChevronDown color="#9ca3af" />}
+                          </button>
+                          {expandido && (
+                            <div style={{ padding: '0 14px 14px 46px', fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                              {r.descricao || 'Sem descrição definida para este requisito.'}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
             )}
+
+            {/* Rodapé: validade */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 14, borderTop: '1px solid #f0f0f0' }}>
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                {selecionado.validadeDias
+                  ? `Válido por ${selecionado.validadeDias} dias após atribuição`
+                  : 'Sem prazo de expiração'}
+              </span>
+              <span style={{
+                width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
+                background: selecionado.validadeDias ? '#f0b429' : '#22c55e',
+              }} />
+            </div>
           </div>
         </Overlay>
       )}
@@ -292,7 +406,6 @@ function Overlay({ children, onClose }) {
 
 const btnExport  = { background: '#fff', border: '1.5px solid #39639C', borderRadius: 12, padding: '8px 20px', fontSize: 13, fontWeight: 500, color: '#39639C', cursor: 'pointer' }
 const selectStyle = { background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }
-const infoBox    = { background: '#f9fafb', borderRadius: 8, padding: '10px 12px' }
 const fecharBtn  = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
 const btnPag     = { display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, color: '#374151', cursor: 'pointer', boxShadow: '0 2px 12px rgba(237,237,237,1)' }
 const btnTab     = { border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }

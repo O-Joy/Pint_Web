@@ -1,9 +1,7 @@
-// Login.jsx — Ecrã de login
-// Bootstrap puro — sem classes CSS customizadas nos elementos de formulário
-
 import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import AuthLayout from '../../components/AuthLayout'
+import ModalPoliticaPrivacidade from '../../components/ModalPoliticaPrivacidade'
 import { login } from '../../services/api'
 import { guardarSessao } from '../../utils/auth'
 
@@ -15,6 +13,7 @@ export default function Login() {
   const [aceitouRgpd, setAceitouRgpd] = useState(false)
   const [erro, setErro] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [modalPoliticaAberto, setModalPoliticaAberto] = useState(false)
 
   const mensagemSucesso = location.state?.mensagem
 
@@ -105,7 +104,7 @@ export default function Login() {
             onChange={(e) => { setAceitouRgpd(e.target.checked); setErro('') }} />
           <label className="form-check-label small text-secondary" htmlFor="rgpd">
             Li e aceito a{' '}
-            <a href="#" className="text-primary">Política de Privacidade</a>
+            <a href="#" className="text-primary" onClick={(e) => { e.preventDefault(); setModalPoliticaAberto(true) }}>Política de Privacidade</a>
             {' '}e autorizo o tratamento dos meus dados pessoais para efeitos de certificação profissional.
           </label>
         </div>
@@ -128,6 +127,8 @@ export default function Login() {
           Redefinir palavra-passe
         </Link>
       </form>
+
+      {modalPoliticaAberto && <ModalPoliticaPrivacidade onClose={() => setModalPoliticaAberto(false)} />}
     </AuthLayout>
   )
 }

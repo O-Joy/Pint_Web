@@ -14,4 +14,10 @@ router.delete('/notificacoes/:id', notificacoesController.eliminarNotificacao);
 // PUT ->marcar com lida
 router.put('/notificacoes/:id/lida', notificacoesController.marcarLida);
 
+// PUT -> marcar como não lida
+router.put('/notificacoes/:id/nao-lida', notificacoesController.marcarNaoLida);
+
+// PUT -> marcar todas como lidas
+router.put('/notificacoes/marcar-todas-lidas', notificacoesController.marcarTodasLidas);
+
 module.exports = router;

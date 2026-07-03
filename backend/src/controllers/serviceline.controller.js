@@ -111,11 +111,25 @@ exports.getTopConsultores = async (req, res) => {
 
     const resultado = await Promise.all(consultores.map(async (c) => {
       const u           = await Utilizador.findOne({ where: { idUtilizador: c.idUtilizador } });
-      const totalBadges = await BadgeUtilizador.count({ where: { idUtilizador: c.idUtilizador } });
+      const badgesUtilizador = await BadgeUtilizador.findAll({ where: { idUtilizador: c.idUtilizador } });
+      const totalBadges = badgesUtilizador.length;
       const pontuacoes  = await Pontuacao.findAll({ where: { idUtilizador: c.idUtilizador } });
       const totalPontos = pontuacoes.reduce((acc, p) => acc + (p.qtPontos || 0), 0);
 
-      return { nome: u?.nomeUtilizador ?? '-', urlFoto: u?.urlFoto ?? null, totalBadges, totalPontos };
+      // Progresso no Learning Path = nível mais alto já obtido (A=Júnior ... E=Líder de Conhecimento) / 5 níveis
+      const ORDEM_NIVEL = { A: 1, B: 2, C: 3, D: 4, E: 5 };
+      let nivelMaisAlto = null;
+      for (const bu of badgesUtilizador) {
+        if (!bu.idBadgeRegular) continue;
+        const badge = await BadgeRegular.findOne({ where: { idBadgeRegular: bu.idBadgeRegular } });
+        const nivel = badge ? await Nivel.findOne({ where: { idNivel: badge.idNivel } }) : null;
+        if (nivel?.tipo && (!nivelMaisAlto || (ORDEM_NIVEL[nivel.tipo] || 0) > (ORDEM_NIVEL[nivelMaisAlto] || 0))) {
+          nivelMaisAlto = nivel.tipo;
+        }
+      }
+      const progresso = nivelMaisAlto ? Math.round(((ORDEM_NIVEL[nivelMaisAlto] || 0) / 5) * 100) : 0;
+
+      return { nome: u?.nomeUtilizador ?? '-', urlFoto: u?.urlFoto ?? null, totalBadges, totalPontos, nivelMaisAlto, progresso };
     }));
 
     resultado.sort((a, b) => b.totalPontos - a.totalPontos);

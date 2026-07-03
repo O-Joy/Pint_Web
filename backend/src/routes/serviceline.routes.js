@@ -32,6 +32,7 @@ router.get('/consultores',         sl.getConsultores);
 router.get('/consultores/:id',     sl.getConsultorDetalhe);
 router.get('/ranking',             sl.getRanking);
 router.get('/gamification/todos' , gamificationController.getRankingGlobal);
+router.get('/gamification/estatisticas', gamificationController.getEstatisticasGamification);
 
 // —— RELATÓRIOS ——
 // ── RELATÓRIOS — KPIs ──
