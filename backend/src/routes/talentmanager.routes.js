@@ -11,7 +11,6 @@ router.get('/tm/consultores', tmController.getConsultores);
 router.put('/tm/candidaturas/:numCandidatura/aprovar', tmController.aprovarCandidatura);
 router.put('/tm/candidaturas/:numCandidatura/rejeitar', tmController.rejeitarCandidatura);
 router.put('/tm/candidaturas/:numCandidatura/devolver', tmController.devolverCandidatura);
-router.get('/tm/candidaturas/:numCandidatura/detalhe', tmController.getCandidaturaDetalhe);
 router.get('/tm/estatisticas-mensais', tmController.getEstatisticasMensais);
 router.get('/tm/historico-badges', tmController.getHistoricoBadges);
 
