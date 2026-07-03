@@ -220,15 +220,6 @@ body {
   padding: 0.6rem 0.3rem;
 }
 
-/* Responsivo */
-@media (max-width: 768px) {
-  .auth-panel-left {
-    display: none;
-  }
-  .auth-panel-right {
-    width: 100%;
-  }
-}
 
 .pg-top {
   position: fixed;
@@ -284,7 +275,7 @@ LOGO
 barras
 ============================================================*/
  
-.sidebar {
+ .sidebar {
   width: 220px;
   min-height: calc(100vh - 60px);
   background: #FBFBFB;
@@ -292,7 +283,6 @@ barras
   position: fixed;
   top: 60px;
   left: 0;
-  width: 200px;
   height: calc(100vh - 60px);
   background: var(--cor-fundo);
   display: flex;
@@ -334,13 +324,13 @@ barras
   background: var(--cor-primaria);
   color: white;
 }
- 
+
 .sidebar-nav-icon {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
- 
+
 .sidebar-footer {
   padding: 1rem 0.75rem;
   display: flex;
@@ -348,7 +338,7 @@ barras
   gap: 12px;
   flex-shrink: 0;
 }
- 
+
 .sidebar-logout {
   display: flex;
   align-items: center;
@@ -361,16 +351,16 @@ barras
   padding: 0;
   transition: color 0.15s;
 }
- 
+
 .sidebar-logout:hover { color: var(--cor-erro); }
- 
+
 .sidebar-user {
   display: flex;
   align-items: center;
   gap: 10px;
   text-decoration: none;
 }
- 
+
 .sidebar-avatar {
   width: 34px;
   height: 34px;
@@ -384,9 +374,9 @@ barras
   font-weight: 600;
   flex-shrink: 0;
 }
- 
+
 .sidebar-user-info { display: flex; flex-direction: column; }
- 
+
 .sidebar-user-name {
   font-size: 0.8rem;
   font-weight: 600;
@@ -396,7 +386,7 @@ barras
   text-overflow: ellipsis;
   max-width: 120px;
 }
- 
+
 .sidebar-user-role {
   font-size: 0.7rem;
   color: var(--cor-texto-secundario);
@@ -1102,5 +1092,36 @@ barras
   .dashboard-donut {
     width: 90px;
     height: 90px;
+  }
+}
+
+.sidebar-toggle-btn {
+  display: block;
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 150;
+  background: #39639C;
+  color: white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: left 0.3s ease;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 99;
+}
+
+
+@media (max-width: 768px) {
+  .pg-content {
+    margin-left: 200px;
   }
 }

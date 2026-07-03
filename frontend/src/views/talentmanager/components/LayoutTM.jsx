@@ -18,7 +18,7 @@ export default function LayoutTM({ children }) {
       </div>
       <div className="container-fluid pg-body">
         <div className="row h-100">
-          <div className="col-auto d-none d-md-flex p-0">
+          <div className="col-auto d-flex p-0">
             <Sidebar navItems={NAV_ITEMS} perfil="Talent Manager" />
           </div>
           <div className="col">
