@@ -6,6 +6,12 @@ const BadgeUtilizador = require('../model/badgeUtilizador');
 const Pontuacao = require('../model/pontuacao');
 const Nivel = require('../model/nivel');
 const Area = require('../model/area');
+const HistoricoCandidatura = require('../model/historicoCandidatura');
+const EstadosCandidatura = require('../model/estadosCandidatura');
+const RegistoSla = require('../model/slaRegisto');
+const Sla = require('../model/sla');
+const Requisitos = require('../model/requisitos');
+const Evidencia = require('../model/evidencia');
 const { Op } = require('sequelize');
 
 // GET /api/tm/dashboard
@@ -98,6 +104,113 @@ exports.getCandidaturas = async (req, res) => {
     return res.json(resultado);
   } catch (err) {
     console.error('[tm] getCandidaturas:', err.message);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+};
+
+// GET /api/tm/candidaturas/:numCandidatura/detalhe
+exports.getCandidaturaDetalhe = async (req, res) => {
+  const numCandidatura = parseInt(req.params.numCandidatura);
+  try {
+    const candidatura = await Candidatura.findOne({ where: { numCandidatura } });
+    if (!candidatura) return res.status(404).json({ error: 'Candidatura não encontrada' });
+
+    // Consultor
+    let nomeConsultor = '-', emailConsultor = '-', nomeArea = '-'
+    const consultor = await Consultor.findOne({ where: { idUtilizador: candidatura.idCandidato } });
+    if (consultor) {
+      const utilizador = await Utilizador.findOne({ where: { idUtilizador: candidatura.idCandidato } });
+      if (utilizador) {
+        nomeConsultor = utilizador.nomeUtilizador;
+        emailConsultor = utilizador.email;
+      }
+      if (consultor.idArea) {
+        const area = await Area.findOne({ where: { idArea: consultor.idArea } });
+        if (area) nomeArea = area.nomeArea;
+      }
+    }
+
+    // Badge + Nível
+    let nomeBadge = '-', nomeNivel = '-', pontos = 0
+    const badge = await BadgeRegular.findOne({ where: { idBadgeRegular: candidatura.idBadgeRegular } });
+    if (badge) {
+      nomeBadge = badge.nomeBadge;
+      pontos = badge.pontos || 0;
+      if (badge.idNivel) {
+        const nivel = await Nivel.findOne({ where: { idNivel: badge.idNivel } });
+        if (nivel) nomeNivel = nivel.nomeNivel;
+      }
+    }
+
+    // Histórico (timeline)
+    const historicoRaw = await HistoricoCandidatura.findAll({
+      where: { numCandidatura },
+      order: [['dataAlteracao', 'ASC']],
+    });
+    const historico = await Promise.all(historicoRaw.map(async (h) => {
+      const estado = await EstadosCandidatura.findOne({ where: { idEstado: h.idEstadoAtual } });
+      const responsavel = h.idResponsavel
+        ? await Utilizador.findOne({ where: { idUtilizador: h.idResponsavel } })
+        : null;
+      return {
+        dataAlteracao: h.dataAlteracao,
+        comentario: h.comentario,
+        tipoResponsavel: h.tipoResponsavel,
+        nomeEstado: estado?.nomeEstado ?? '-',
+        nomeResponsavel: responsavel?.nomeUtilizador ?? 'Sistema',
+        idEstadoAtual: h.idEstadoAtual,
+      };
+    }));
+
+    // SLA mais recente para esta candidatura
+    let sla = null
+    const registoSla = await RegistoSla.findOne({
+      where: { numCandidatura },
+      order: [['dataAlteracao', 'DESC']],
+    });
+    if (registoSla) {
+      const agora = new Date();
+      const dataLimite = new Date(registoSla.dataLimite);
+      const horasRestantes = Math.round((dataLimite - agora) / (1000 * 60 * 60));
+      sla = {
+        dataInicio: registoSla.dataAlteracao,
+        dataLimite: registoSla.dataLimite,
+        horasRestantes,
+        prazoUltrapassado: !!registoSla.prazoUltrapassado || horasRestantes < 0,
+      };
+    }
+
+    // Requisitos + Evidências
+    const requisitosBadge = await Requisitos.findAll({ where: { idBadgeRegular: candidatura.idBadgeRegular } });
+    const evidencias = await Evidencia.findAll({ where: { numCandidatura } });
+
+    const requisitos = requisitosBadge.map((r) => {
+      const evidencia = evidencias.find(e => e.idRequisito === r.idRequisito);
+      return {
+        idRequisito: r.idRequisito,
+        nomeRequisito: r.nomeRequisito,
+        descricao: r.descricao,
+        pathFicheiro: evidencia?.pathFicheiro ?? null,
+        estado: evidencia?.estado ?? 'pendente',
+      };
+    });
+
+    return res.json({
+      numCandidatura: candidatura.numCandidatura,
+      idEstadoAtual: candidatura.idEstadoAtual,
+      dataCriacao: candidatura.dataCriacao,
+      nomeConsultor,
+      emailConsultor,
+      nomeArea,
+      nomeBadge,
+      nomeNivel,
+      pontos,
+      historico,
+      sla,
+      requisitos,
+    });
+  } catch (err) {
+    console.error('[tm] getCandidaturaDetalhe:', err.message);
     return res.status(500).json({ error: 'Erro interno' });
   }
 };

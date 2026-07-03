@@ -41,6 +41,9 @@ export default function Validacoes() {
   const porPagina = 10
 
   const [candidaturaSelecionada, setCandidaturaSelecionada] = useState(null)
+  const [detalhe, setDetalhe] = useState(null)
+  const [loadingDetalhe, setLoadingDetalhe] = useState(false)
+  const [feedback, setFeedback] = useState('')
   const [toast, setToast] = useState(null)
   const [aProcessar, setAProcessar] = useState(null)
 
@@ -56,7 +59,40 @@ export default function Validacoes() {
       .finally(() => setLoading(false))
   }
 
-  const mostrarToast = (mensagem, tipo = 'sucesso') => {
+  const abrirDetalhe = (numCandidatura) => {
+    setCandidaturaSelecionada(numCandidatura)
+    setDetalhe(null)
+    setFeedback('')
+    setLoadingDetalhe(true)
+    api.get(`/tm/candidaturas/${numCandidatura}/detalhe`)
+      .then(res => setDetalhe(res.data))
+      .catch(() => mostrarToast('Erro ao carregar detalhes da candidatura.', 'erro'))
+      .finally(() => setLoadingDetalhe(false))
+  }
+
+  const fecharDetalhe = () => {
+    setCandidaturaSelecionada(null)
+    setDetalhe(null)
+    setFeedback('')
+  }
+
+  const devolverCandidatura = async (numCandidatura) => {
+    setAProcessar(numCandidatura)
+    try {
+      await api.put(`/tm/candidaturas/${numCandidatura}/devolver`, { comentario: feedback || undefined })
+      setCandidaturas(prev => prev.map(c =>
+        c.numCandidatura === numCandidatura ? { ...c, idEstadoAtual: 2 } : c
+      ))
+      fecharDetalhe()
+      mostrarToast(`Candidatura #${numCandidatura} devolvida para retificação.`, 'rejeitada')
+    } catch (err) {
+      mostrarToast(err.response?.data?.error || 'Erro ao devolver candidatura.', 'erro')
+    } finally {
+      setAProcessar(null)
+    }
+  }
+  
+   const mostrarToast = (mensagem, tipo = 'sucesso') => {
     setToast({ mensagem, tipo })
     setTimeout(() => setToast(null), 3500)
   }
@@ -64,11 +100,11 @@ export default function Validacoes() {
   const aprovarCandidatura = async (numCandidatura) => {
     setAProcessar(numCandidatura)
     try {
-      await api.put(`/tm/candidaturas/${numCandidatura}/aprovar`)
+      await api.put(`/tm/candidaturas/${numCandidatura}/aprovar`, { comentario: feedback || undefined })
       setCandidaturas(prev => prev.map(c =>
         c.numCandidatura === numCandidatura ? { ...c, idEstadoAtual: 3 } : c
       ))
-      setCandidaturaSelecionada(null)
+      fecharDetalhe()
       mostrarToast(`Candidatura #${numCandidatura} validada com sucesso.`, 'sucesso')
     } catch (err) {
       mostrarToast(err.response?.data?.error || 'Erro ao aprovar candidatura.', 'erro')
@@ -84,7 +120,7 @@ export default function Validacoes() {
       setCandidaturas(prev => prev.map(c =>
         c.numCandidatura === numCandidatura ? { ...c, idEstadoAtual: 6 } : c
       ))
-      setCandidaturaSelecionada(null)
+      fecharDetalhe()
       mostrarToast(`Candidatura #${numCandidatura} rejeitada.`, 'rejeitada')
     } catch (err) {
       mostrarToast(err.response?.data?.error || 'Erro ao rejeitar candidatura.', 'erro')
@@ -151,7 +187,7 @@ export default function Validacoes() {
     doc.save('validacoes.pdf')
   }
 
-  return (
+ return (
     <LayoutTM>
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
@@ -243,7 +279,7 @@ export default function Validacoes() {
                         </td>
                         <td style={{ padding: '10px 12px' }}>
                           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                            <button title="Ver detalhes" onClick={() => setCandidaturaSelecionada(c)} style={iconBtnStyle}>
+                            <button title="Ver detalhes" onClick={() => abrirDetalhe(c.numCandidatura)} style={iconBtnStyle}>
                               <FaRegEye color="#39639C" size={16} />
                             </button>
                             {ativa && (
@@ -294,44 +330,125 @@ export default function Validacoes() {
 
       {candidaturaSelecionada && (
         <div style={overlayStyle}>
-          <div style={{ ...modalStyle, maxWidth: 440 }}>
-            <button onClick={() => setCandidaturaSelecionada(null)} style={fecharStyle}>×</button>
-            <h4 style={{ color: '#1a1a2e', marginBottom: 16 }}>
-              Candidatura #{candidaturaSelecionada.numCandidatura}
-            </h4>
+          <div style={{ ...modalStyle, maxWidth: 600 }}>
+            <button onClick={fecharDetalhe} style={fecharStyle}>×</button>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, marginBottom: 20 }}>
-              <DetalheLinha label="Consultor" valor={candidaturaSelecionada.nomeConsultor} />
-              <DetalheLinha label="Email" valor={candidaturaSelecionada.emailConsultor} />
-              <DetalheLinha label="Área" valor={candidaturaSelecionada.nomeArea} />
-              <DetalheLinha label="Badge" valor={candidaturaSelecionada.nomeBadge} />
-              <DetalheLinha label="Nível" valor={candidaturaSelecionada.nomeNivel} />
-              <DetalheLinha
-                label="Submetido em"
-                valor={candidaturaSelecionada.dataCriacao
-                  ? new Date(candidaturaSelecionada.dataCriacao).toLocaleDateString('pt-PT')
-                  : '-'}
-              />
-              <DetalheLinha label="Estado" valor={nomeEstado(candidaturaSelecionada.idEstadoAtual)} />
-            </div>
+            {loadingDetalhe || !detalhe ? (
+              <p style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>A carregar...</p>
+            ) : (
+              <>
+                <h4 style={{ color: '#1a1a2e', fontWeight: 700, marginBottom: 18 }}>
+                  Nº Candidatura: {detalhe.numCandidatura}
+                </h4>
 
-            {(candidaturaSelecionada.idEstadoAtual === 1 || candidaturaSelecionada.idEstadoAtual === 2) && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                <button
-                  onClick={() => rejeitarCandidatura(candidaturaSelecionada.numCandidatura)}
-                  disabled={aProcessar === candidaturaSelecionada.numCandidatura}
-                  style={btnRejeitarStyle}
-                >
-                  Rejeitar
-                </button>
-                <button
-                  onClick={() => aprovarCandidatura(candidaturaSelecionada.numCandidatura)}
-                  disabled={aProcessar === candidaturaSelecionada.numCandidatura}
-                  style={btnAprovarStyle}
-                >
-                  Aprovar
-                </button>
-              </div>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                  <div style={cartaoInfoStyle}>
+                    <span style={cartaoLabelStyle}>Consultor:</span>
+                    <strong style={{ fontSize: 13 }}>{detalhe.nomeConsultor}</strong>
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{detalhe.emailConsultor}</span>
+                  </div>
+                  <div style={cartaoInfoStyle}>
+                    <span style={cartaoLabelStyle}>Badge + Nível:</span>
+                    <strong style={{ fontSize: 13 }}>{detalhe.nomeBadge} ({detalhe.nomeNivel})</strong>
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>{detalhe.pontos} pontos</span>
+                  </div>
+                </div>
+
+                <h6 style={tituloSeccaoStyle}>Histórico:</h6>
+                <div style={{ marginBottom: 18 }}>
+                  {detalhe.historico.length === 0 ? (
+                    <p style={{ fontSize: 12, color: '#9ca3af' }}>Sem registos.</p>
+                  ) : detalhe.historico.map((h, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+                      <span style={{ color: '#39639C', fontSize: 18, lineHeight: '14px' }}>•</span>
+                      <div>
+                        <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{h.nomeEstado}</p>
+                        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>
+                          {new Date(h.dataAlteracao).toLocaleDateString('pt-PT')} às {new Date(h.dataAlteracao).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          {h.comentario ? ` — ${h.comentario}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {detalhe.sla && (
+                  <>
+                    <h6 style={tituloSeccaoStyle}>SLA detalhada</h6>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 18, fontSize: 13 }}>
+                      <div>
+                        <span style={cartaoLabelStyle}>Data de início:</span><br />
+                        <strong>{new Date(detalhe.sla.dataInicio).toLocaleDateString('pt-PT')}</strong>
+                      </div>
+                      <div>
+                        <span style={cartaoLabelStyle}>Data limite:</span><br />
+                        <strong>{new Date(detalhe.sla.dataLimite).toLocaleDateString('pt-PT')}</strong>
+                      </div>
+                      <div>
+                        <span style={cartaoLabelStyle}>Estado da SLA:</span><br />
+                        <strong>
+                          {Math.abs(detalhe.sla.horasRestantes)}h{' '}
+                          <span style={{
+                            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                            background: detalhe.sla.prazoUltrapassado ? '#AE0003' : '#06A120',
+                          }} />
+                        </strong>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <h6 style={tituloSeccaoStyle}>Requisitos:</h6>
+                <div style={{ marginBottom: 18 }}>
+                  {detalhe.requisitos.length === 0 ? (
+                    <p style={{ fontSize: 12, color: '#9ca3af' }}>Sem requisitos associados.</p>
+                  ) : detalhe.requisitos.map((r) => (
+                    <RequisitoItem key={r.idRequisito} requisito={r} />
+                  ))}
+                </div>
+
+                <h6 style={tituloSeccaoStyle}>Feedback:</h6>
+                <textarea
+                  value={feedback}
+                  onChange={e => setFeedback(e.target.value)}
+                  placeholder="Adicione um comentário"
+                  style={{
+                    width: '100%', minHeight: 70, borderRadius: 8, border: '1px solid #ddd',
+                    padding: 10, fontSize: 13, fontFamily: 'inherit', resize: 'vertical',
+                    marginBottom: 20, boxSizing: 'border-box',
+                  }}
+                />
+
+                  {(detalhe.idEstadoAtual === 1 || detalhe.idEstadoAtual === 2) && (
+                    <div style={{
+                      display: 'flex', justifyContent: 'flex-end', gap: 10,
+                      position: 'sticky', bottom: -32, background: '#fff',
+                      padding: '12px 0 4px', marginTop: 4,
+                    }}>
+                      <button
+                      onClick={() => devolverCandidatura(detalhe.numCandidatura)}
+                      disabled={aProcessar === detalhe.numCandidatura}
+                      style={btnDevolverStyle}
+                    >
+                      <FiRefreshCw size={13} /> Devolver
+                    </button>
+                    <button
+                      onClick={() => rejeitarCandidatura(detalhe.numCandidatura)}
+                      disabled={aProcessar === detalhe.numCandidatura}
+                      style={btnRejeitarStyle}
+                    >
+                      Rejeitar
+                    </button>
+                    <button
+                      onClick={() => aprovarCandidatura(detalhe.numCandidatura)}
+                      disabled={aProcessar === detalhe.numCandidatura}
+                      style={btnEnviarSlStyle}
+                    >
+                      Enviar Service Line
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -351,14 +468,47 @@ export default function Validacoes() {
   )
 }
 
-function DetalheLinha({ label, valor }) {
+function RequisitoItem({ requisito }) {
+  const [aberto, setAberto] = useState(false)
+  const cores = requisito.estado === 'aprovado'
+    ? { bg: '#e8f5e9', color: '#06A120' }
+    : requisito.estado === 'rejeitado'
+    ? { bg: '#fdeceb', color: '#AE0003' }
+    : { bg: '#FFF3E0', color: '#F57C00' }
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f5f5f5', paddingBottom: 6 }}>
-      <span style={{ color: '#6b7280' }}>{label}</span>
-      <span style={{ fontWeight: 600, color: '#1a1a2e' }}>{valor || '-'}</span>
+    <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, marginBottom: 8, overflow: 'hidden' }}>
+      <div
+        onClick={() => setAberto(!aberto)}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', cursor: 'pointer' }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600 }}>{requisito.nomeRequisito}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            background: cores.bg, color: cores.color, borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 600,
+          }}>
+            • {requisito.estado === 'aprovado' ? 'Aprovado' : requisito.estado === 'rejeitado' ? 'Rejeitado' : 'Em validação'}
+          </span>
+          <span style={{ color: '#9ca3af', fontSize: 12 }}>{aberto ? '▲' : '▼'}</span>
+        </div>
+      </div>
+      {aberto && (
+        <div style={{ padding: '0 14px 12px', fontSize: 12, color: '#6b7280' }}>
+          {requisito.descricao && <p style={{ margin: '0 0 8px' }}>{requisito.descricao}</p>}
+          {requisito.pathFicheiro ? (
+            <a href={requisito.pathFicheiro} target="_blank" rel="noreferrer" style={{ color: '#39639C', fontWeight: 600 }}>
+              Ver evidência submetida
+            </a>
+          ) : (
+            <span style={{ color: '#9ca3af' }}>Sem evidência submetida.</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+
 
 const btnSecundarioStyle = {
   background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: '8px 14px',
@@ -381,12 +531,13 @@ const paginaBtnStyle = {
 const overlayStyle = {
   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
   display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+  padding: 24, boxSizing: 'border-box',
 }
 
 const modalStyle = {
-  background: '#fff', borderRadius: 14, padding: 28, width: '90%',
+  background: '#fff', borderRadius: 14, padding: '28px 28px 32px', width: '90%',
   boxShadow: '0 8px 24px rgba(0,0,0,0.12)', position: 'relative',
-  maxHeight: '85vh', overflowY: 'auto',
+  maxHeight: '88vh', overflowY: 'auto',
 }
 
 const fecharStyle = {
@@ -402,4 +553,28 @@ const btnAprovarStyle = {
 const btnRejeitarStyle = {
   background: '#fff', color: '#AE0003', border: '1px solid #AE0003', borderRadius: 6,
   padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+}
+
+const btnEnviarSlStyle = {
+  background: '#06A120', color: '#fff', border: 'none', borderRadius: 6,
+  padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+}
+
+const btnDevolverStyle = {
+  background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 6,
+  padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 6,
+}
+
+const cartaoInfoStyle = {
+  flex: 1, background: '#f9fafb', borderRadius: 10, padding: '10px 14px',
+  display: 'flex', flexDirection: 'column', gap: 2,
+}
+
+const cartaoLabelStyle = {
+  fontSize: 11, color: '#9ca3af',
+}
+
+const tituloSeccaoStyle = {
+  fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 10,
 }

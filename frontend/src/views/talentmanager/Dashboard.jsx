@@ -135,11 +135,11 @@ export default function DashboardTalent() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             {topConsultores.map((c, i) => (
-              <div key={i} style={{ border: '1px solid #d0dff0', borderRadius: 14, padding: '16px 14px', background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div key={i} style={{ border: '1px solid #d0dff0', borderRadius: 14, padding: '16px 14px', background: '#fff', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, minWidth: 0 }}>
                   <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#bdbdbd', flexShrink: 0 }} />
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.3 }}>{c.nome}</div>
-                  {i < 4 && (
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nome}</div>
+                    {i < 4 && (
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%', marginLeft: 'auto',
                       background: i === 0 ? '#ad9409' : i === 1 ? '#a9a9a9' : i === 2 ? '#965e25' : '#1cd6d6',
