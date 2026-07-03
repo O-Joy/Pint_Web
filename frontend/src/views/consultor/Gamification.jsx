@@ -6,6 +6,12 @@ import api from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa'
 
+// Foto - URL completo ou como caminho do upload
+function urlFotoCompleto(urlFoto) {
+  if (!urlFoto) return null
+  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+}
+
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
   { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
@@ -44,7 +50,7 @@ export default function GamificationConsultor() {
   }, [])
 
   const top3 = ranking.slice(0, 3)
-  const resto = ranking.slice(3)
+  const resto = ranking
   const meuDesempenho = ranking.find((r) => r.idUtilizador === utilizador?.id)
 
   const podio = [
@@ -80,9 +86,11 @@ export default function GamificationConsultor() {
                           <div key={p.posicao} className="text-center" style={{ width: 110 }}>
                             <div
                               className="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
-                              style={{ width: 56, height: 56, background: '#e2e8f0', color: '#6b7280', fontWeight: 700, fontSize: 20 }}
+                              style={{ width: 56, height: 56, background: '#e2e8f0', color: '#6b7280', fontWeight: 700, fontSize: 20, overflow: 'hidden' }}
                             >
-                              {p.dados?.nome?.[0] ?? '?'}
+                              {p.dados?.urlFoto
+                                ? <img src={urlFotoCompleto(p.dados.urlFoto)} alt={p.dados?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : (p.dados?.nome?.[0] ?? '?')}
                             </div>
                             <div className="fw-semibold" style={{ fontSize: 14 }}>{p.dados?.nome?.split(' ')[0] ?? '—'}</div>
                             <div className="text-muted mb-2" style={{ fontSize: 12 }}>{p.dados?.totalPontos ?? 0} pts</div>

@@ -702,7 +702,6 @@ barras
 
 .dashboard-titulo {
   text-align: center;
-  font-size: 1.1rem;
   font-weight: 700;
   color: var(--cor-primaria);
 }
@@ -879,6 +878,7 @@ barras
   justify-content: center;
   font-weight: 700;
   font-size: 0.8rem;
+  overflow: hidden;
   margin-bottom: 4px;
 }
 

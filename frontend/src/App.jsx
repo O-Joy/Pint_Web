@@ -1,10 +1,11 @@
 // App.jsx — Ponto de entrada da aplicação React
-// Define todas as rotas da aplicação usando React Router v6
+// Define todas as rotas da aplicação usando React Router
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css'
 import Perfil from './components/Perfil'
+import Definicoes from './components/Definicoes'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -20,7 +21,6 @@ import DashboardAdmin from './views/admin/Dashboard'
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
 import Consultores from './views/serviceline/Consultores'
-import ConsultorDetalhe from './views/serviceline/ConsultorDetalhe'
 import ValidacoesSL from './views/serviceline/Validacoes'
 import Relatorios from './views/serviceline/Relatorios'
 import Gamification from './views/serviceline/Gamification'
@@ -154,11 +154,6 @@ function App() {
             <Consultores/>
           </ProtectedRoute>
         } />
-        <Route path="/serviceline/consultores/:id" element={
-          <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <ConsultorDetalhe/>
-          </ProtectedRoute>
-        } />
         <Route path="/serviceline/relatorios" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
             <Relatorios />
@@ -180,6 +175,12 @@ function App() {
         <Route path="/perfil" element={
           <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
             <Perfil />
+          </ProtectedRoute>
+} />
+
+        <Route path="/definicoes" element={
+          <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
+            <Definicoes />
           </ProtectedRoute>
 } />
       </Routes>

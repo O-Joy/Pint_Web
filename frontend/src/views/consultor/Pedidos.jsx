@@ -438,7 +438,11 @@ export default function PedidosConsultor() {
           <div style={modalStyle}>
             <button onClick={() => setCandidaturaEditar(null)} style={fecharStyle}>×</button>
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
-              <div style={{ width: 70, height: 70, borderRadius: 12, background: '#e8f0fb', flexShrink: 0 }} />
+              <div style={{ width: 70, height: 70, borderRadius: 12, background: '#e8f0fb', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, overflow: 'hidden' }}>
+              {candidaturaEditar.urlImagem
+              ? <img src={`http://localhost:3001/${candidaturaEditar.urlImagem}`} alt={candidaturaEditar.nomeBadge} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              : '🏅'}
+              </div>
               <div style={{ flex: 1 }}>
                 <h4 style={{ color: '#1a1a2e', margin: 0 }}>{candidaturaEditar.nomeBadge}</h4>
                 <span style={{ background: '#FFF3E0', color: '#F57C00', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>

@@ -2,11 +2,11 @@
 // Recebe Cards e Info como props —> variam por perfil
 // Vai buscar os dados do utilizador diretamente do sessionStorage/localStorage
 // Deteta automaticamente o perfil e mostra os campos correspondentes
-// Vai buscar os dados do utilizador diretamente do sessionStorage/localStorage
-// Deteta automaticamente o perfil e mostra os campos correspondentes
 
-
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getUtilizador } from '../utils/auth'
+import api from '../services/api'
 import Sidebar, { icons } from './Sidebar'
 import Topbar from './Topbar'
 import { FaMedal } from 'react-icons/fa6'
@@ -17,6 +17,7 @@ import { FaLinkedin } from "react-icons/fa";
 import { FaGlobe } from "react-icons/fa";
 import { FaPhone } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
+import { FaPen } from "react-icons/fa";
 
 const NAV_ITEMS = {
   consultor: [
@@ -46,32 +47,54 @@ const PERFIL_LABELS = {
   administrador: 'Administrador',
 }
 
+// A foto pode vir como URL completo ou como caminho do upload (uploads/fotos/xxx.jpg)
+function urlFotoCompleto(urlFoto) {
+  if (!urlFoto) return null
+  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+}
+
 export default function Perfil() {
-  const utilizador = getUtilizador()
-  const perfil = utilizador?.perfil || 'consultor'
-  const inicial = utilizador?.nome?.[0]?.toUpperCase() || 'U'
+  const navigate = useNavigate()
+  const utilizadorLocal = getUtilizador()
+  const perfil = utilizadorLocal?.perfil || 'consultor'
   const navItems = NAV_ITEMS[perfil] || []
   const perfilLabel = PERFIL_LABELS[perfil] || ''
+
+  const [dados, setDados] = useState(null)
+  const [aCarregar, setACarregar] = useState(true)
+
+  useEffect(() => {
+    api.get('/perfil/me')
+      .then((res) => setDados(res.data))
+      .catch((err) => console.error('[Perfil]', err))
+      .finally(() => setACarregar(false))
+  }, [])
+
+  // Enquanto a API não responde, usa o que ficou guardado no login para não mostrar tudo vazio
+  const utilizador = dados || utilizadorLocal || {}
+  const inicial = utilizador?.nome?.[0]?.toUpperCase() || 'U'
 
   const dataMembro = utilizador?.dataMembro
     ? new Date(utilizador.dataMembro).toLocaleDateString('pt-PT')
     : '—'
 
   const statsCards = perfil === 'consultor' ? [
-    { icone: <FaMedal size={16} />, label: 'Badges:', valor: utilizador?.totalBadges || 0 },
-    { icone: <LuTarget size={16} />, label: 'Objetivos:', valor: utilizador?.totalObjetivos || 0 },
-    { icone: <FaTrophy size={16} />, label: 'Ranking:', valor: `${utilizador?.posicaoRanking || '—'}º` },
-    { icone: <IoIosTrendingUp size={16}/>, label: 'Pontos:', valor: utilizador?.totalPontos || 0 },
+    { icone: <FaMedal size={16} />, label: 'Badges:', valor: utilizador?.totalBadges ?? 0 },
+    { icone: <LuTarget size={16} />, label: 'Objetivos:', valor: utilizador?.totalObjetivos ?? 0 },
+    { icone: <FaTrophy size={16} />, label: 'Ranking:', valor: utilizador?.posicaoRanking ? `${utilizador.posicaoRanking}º` : '—' },
+    { icone: <IoIosTrendingUp size={16}/>, label: 'Pontos:', valor: utilizador?.totalPontos ?? 0 },
   ] : []
 
   const camposInfo = [
     ...(utilizador?.nomeLearningPath ? [{ label: 'Learning Path:', valor: utilizador.nomeLearningPath }] : []),
     { label: 'Membro desde:', valor: dataMembro },
-    ...(utilizador?.nomeArea ? [{ label: 'Área:', valor: utilizador.nomeArea }] : []),
-    ...(utilizador?.urlLinkedin ? [{
+    ...(utilizador?.nomeServiceLine ? [{ label: 'Service Line:', valor: utilizador.nomeServiceLine }] : []),
+        ...(utilizador?.urlLinkedin ? [{
       icone: <FaLinkedin />,
       valor: utilizador.urlLinkedin
     }] : []),
+    ...(utilizador?.nomeArea ? [{ label: 'Área:', valor: utilizador.nomeArea }] : []),
+   
     ...(perfil === 'consultor' ? [{
       icone: <FaGlobe />,
       valor: `www.softinsa.pt/galeria-publica/${utilizador?.nome?.split(' ')[0]}`
@@ -105,7 +128,7 @@ export default function Perfil() {
                         <div className="col-auto">
                         <div className="perfil-avatar">
                             {utilizador?.urlFoto
-                            ? <img src={utilizador.urlFoto} alt="avatar" />
+                            ? <img src={urlFotoCompleto(utilizador.urlFoto)} alt="avatar" />
                             : <span>{inicial}</span>
                             }
                         </div>
@@ -113,8 +136,17 @@ export default function Perfil() {
 
                         {/* Nome e contactos */}
                         <div className="col">
-                        <h2 className="perfil-nome">{utilizador?.nome || '—'}</h2>
-                        <p className="perfil-cargo">{perfilLabel}</p>
+                        <h2 className="perfil-nome">{utilizador?.nome || '—'} {aCarregar && <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>(a atualizar...)</span>}</h2>
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                          <p className="perfil-cargo mb-0">{perfilLabel}</p>
+                          <button
+                            onClick={() => navigate('/definicoes')}
+                            className="btn btn-sm d-inline-flex align-items-center gap-1"
+                            style={{ border: '1px solid #39639C', color: '#39639C', background: '#fff', fontSize: 12, padding: '2px 10px', borderRadius: 20 }}
+                          >
+                            <FaPen size={11} /> Alterar Perfil
+                          </button>
+                        </div>
                         <div className="perfil-contactos">
                             {utilizador?.email && (
                             <div className="perfil-contacto-item">
@@ -171,5 +203,6 @@ export default function Perfil() {
         </div>
       </div>
     </div>
+
   )
 }

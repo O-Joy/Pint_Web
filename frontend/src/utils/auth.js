@@ -1,4 +1,3 @@
-// src/utils/auth.js
 // Utilitário central para gerir a sessão do utilizador
 // Lê do localStorage (sessão permanente) ou sessionStorage (sessão temporária)
 // É usado pelo ProtectedRoute e por qualquer componente que precise saber quem está logado
@@ -14,13 +13,13 @@ export const getUtilizador = () => {
   return dados ? JSON.parse(dados) : null
 }
 
-// Devolve o perfil do utilizador: 'consultor', 'talent_manager', 'service_line', 'administrador'
+// Devolve o perfil do utilizador
 export const getPerfil = () => {
   const utilizador = getUtilizador()
   return utilizador?.perfil || null
 }
 
-// Verifica se o utilizador está autenticado (tem token)
+// Verifica se o utilizador está autenticado
 export const estaAutenticado = () => !!getToken()
 
 // Apaga todos os dados da sessão — usado no logout
@@ -32,11 +31,19 @@ export const limparSessao = () => {
 }
 
 // Grava uma sessão nova — usado no login
-// Limpa SEMPRE os dois storages primeiro, para nunca ficar lixo de uma sessão
-// anterior (ex: outro utilizador que fechou o browser sem fazer logout)
+// Limpa os dois storages primeiro, para nunca ficar lixo de uma sessão anterior
 export const guardarSessao = (token, utilizador, manterSessao) => {
   limparSessao()
   const storage = manterSessao ? localStorage : sessionStorage
   storage.setItem('token', token)
   storage.setItem('utilizador', JSON.stringify(utilizador))
+}
+
+// Atualiza campos específicos do utilizador sem recriar a sessão toda
+
+export const atualizarUtilizadorLocal = (patch) => {
+  const atual = getUtilizador()
+  if (!atual) return
+  const storage = localStorage.getItem('utilizador') ? localStorage : sessionStorage
+  storage.setItem('utilizador', JSON.stringify({ ...atual, ...patch }))
 }

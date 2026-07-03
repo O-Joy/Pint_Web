@@ -84,10 +84,12 @@ exports.getCandidaturas = async (req, res) => {
       let nomeNivel = null;
       let nomeArea = null;
       let pontos = null;
+      let urlImagem = null;
       const br = await BadgeRegular.findOne({ where: { idBadgeRegular: c.idBadgeRegular } });
       if (br) {
         nomeBadge = br.nomeBadge;
         pontos = br.pontos;
+        urlImagem = br.urlImagemBadge;
         if (br.idNivel) {
           const nivel = await Nivel.findOne({ where: { idNivel: br.idNivel } });
           if (nivel) nomeNivel = nivel.nomeNivel;
@@ -121,6 +123,7 @@ exports.getCandidaturas = async (req, res) => {
         nomeNivel,
         nomeArea,
         pontos,
+        urlImage,
         numRequisitos,
         nomeEstadoAtual: nomeEstado,
         acaoNecessaria: ESTADOS_RETIFICACAO.includes(c.idEstadoAtual),
