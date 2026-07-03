@@ -86,7 +86,7 @@ export default function ConsultorDetalhe() {
   if (loading) {
     return (
       <LayoutSL>
-        <p style={{ textAlign: 'center', color: '#aaa', fontFamily: 'Poppins, sans-serif' }}>A carregar...</p>
+        <p className="text-center text-secondary" style={{ fontFamily: 'Poppins, sans-serif' }}>A carregar...</p>
       </LayoutSL>
     )
   }
@@ -95,11 +95,8 @@ export default function ConsultorDetalhe() {
     return (
       <LayoutSL>
         <div style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <p style={{ color: '#e05252' }}>{erro || 'Consultor não encontrado.'}</p>
-          <button onClick={() => navigate('/serviceline/consultores')} style={{
-            background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8,
-            padding: '8px 16px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-          }}>
+          <p className="text-danger">{erro || 'Consultor não encontrado.'}</p>
+          <button onClick={() => navigate('/serviceline/consultores')} className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
             <FiChevronLeft /> Voltar a Consultores
           </button>
         </div>
@@ -131,131 +128,128 @@ export default function ConsultorDetalhe() {
   }
   const tabelaAtiva = tabelas[tab]
 
+  const stats = [
+    { label: 'Badges Obtidos', valor: dados.badgesObtidos.length },
+    { label: 'Badges Em Progresso', valor: dados.badgesEmProgresso.length },
+    { label: 'Badges Especiais', valor: dados.badgesEspeciais.length },
+    { label: 'Pontos Gamification', valor: dados.totalPontos },
+  ]
+
   return (
     <LayoutSL>
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
         {/* ── Breadcrumb + refresh ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
-            <Link to="/serviceline/consultores" style={{ color: '#9ca3af', textDecoration: 'none' }}>Consultores</Link>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <p className="small text-secondary mb-0">
+            <Link to="/serviceline/consultores" className="text-secondary text-decoration-none">Consultores</Link>
             {' > '}Perfil de {dados.nome}
           </p>
-          <FiRefreshCw title="Atualizar" onClick={carregar} style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }} />
+          <FiRefreshCw role="button" title="Atualizar" onClick={carregar} className="text-primary" style={{ fontSize: 16 }} />
         </div>
-        <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: '0 0 20px' }}>Perfil Consultor</h2>
+        <h2 className="fw-bold mb-3 text-primary" style={{ fontSize: 22 }}>Perfil Consultor</h2>
 
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
+        <div className="row g-4 mb-3">
 
           {/* ── Cartão de identidade ── */}
-          <div style={{
-            background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            flex: '1 1 260px', minWidth: 260, maxWidth: 300,
-          }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%', background: '#e8f0fb',
-              color: '#39639C', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, fontWeight: 700, marginBottom: 14, overflow: 'hidden',
-            }}>
-              {dados.urlFoto
-                ? <img src={dados.urlFoto} alt={dados.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : (dados.nome?.[0]?.toUpperCase() || '?')}
-            </div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1a1a2e', marginBottom: 2 }}>{dados.nome}</h3>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 2 }}>{dados.nomeArea} · {dados.nomeServiceLine}</p>
-            <p style={{ fontSize: 13, color: '#39639C', marginBottom: 18 }}>{dados.email}</p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {[
-                { label: 'Badges Obtidos', valor: dados.badgesObtidos.length },
-                { label: 'Badges Em Progresso', valor: dados.badgesEmProgresso.length },
-                { label: 'Badges Especiais', valor: dados.badgesEspeciais.length },
-                { label: 'Pontos Gamification', valor: dados.totalPontos },
-              ].map((s, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{s.label}</div>
-                  <div style={{
-                    display: 'inline-block', background: '#39639C', color: '#fff', fontWeight: 700,
-                    fontSize: 13, borderRadius: 6, padding: '2px 10px',
-                  }}>
-                    {s.valor}
-                  </div>
+          <div className="col-12 col-lg-4">
+            <div className="card h-100">
+              <div className="card-body">
+                <div className="d-flex align-items-center justify-content-center rounded-circle overflow-hidden fw-bold mb-3 text-primary"
+                  style={{ width: 72, height: 72, background: '#e8f0fb', fontSize: 26 }}>
+                  {dados.urlFoto
+                    ? <img src={dados.urlFoto} alt={dados.nome} className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                    : (dados.nome?.[0]?.toUpperCase() || '?')}
                 </div>
-              ))}
+                <h3 className="fs-5 fw-bold mb-1" style={{ color: '#1a1a2e' }}>{dados.nome}</h3>
+                <p className="small text-secondary mb-1">{dados.nomeArea} · {dados.nomeServiceLine}</p>
+                <p className="small mb-3 text-primary">{dados.email}</p>
+
+                <div className="row row-cols-2 g-3">
+                  {stats.map((s, i) => (
+                    <div className="col" key={i}>
+                      <div className="small text-secondary mb-1">{s.label}</div>
+                      <span className="badge rounded-pill bg-primary" style={{ fontSize: 13 }}>{s.valor}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* ── Abas + tabela ── */}
-          <div style={{
-            background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            flex: '2 1 500px', minWidth: 320,
-          }}>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
-              {TABS.map(t => (
-                <button key={t.key} onClick={() => setTab(t.key)} style={{
-                  border: '1px solid ' + (tab === t.key ? '#39639C' : '#e5e7eb'),
-                  background: tab === t.key ? '#39639C' : '#fff',
-                  color: tab === t.key ? '#fff' : '#555',
-                  borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontWeight: 500,
-                }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
+          <div className="col-12 col-lg-8">
+            <div className="card h-100">
+              <div className="card-body">
+                <ul className="nav nav-pills gap-2 mb-3 flex-wrap">
+                  {TABS.map(t => (
+                    <li className="nav-item" key={t.key}>
+                      <button
+                        onClick={() => setTab(t.key)}
+                        className={`nav-link small ${tab === t.key ? 'active' : ''}`}
+                      >
+                        {t.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
 
-            {tabelaAtiva.linhas.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#aaa', padding: '20px 0' }}>{tabelaAtiva.vazio}</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                      {tabelaAtiva.colunas.map(c => (
-                        <th key={c} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>{c}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tabelaAtiva.linhas.map((linha, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                        {linha.map((valor, j) => (
-                          <td key={j} style={{ padding: '10px 12px', color: j === 0 ? '#333' : '#6b7280', fontWeight: j === 0 ? 500 : 400 }}>
-                            {valor}
-                          </td>
+                {tabelaAtiva.linhas.length === 0 ? (
+                  <p className="text-center text-secondary py-3 mb-0">{tabelaAtiva.vazio}</p>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead>
+                        <tr>
+                          {tabelaAtiva.colunas.map(c => <th key={c} className="text-nowrap">{c}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tabelaAtiva.linhas.map((linha, i) => (
+                          <tr key={i}>
+                            {linha.map((valor, j) => (
+                              <td key={j} className={j === 0 ? 'fw-medium' : 'text-secondary'}>{valor}</td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Evolução Profissional ── */}
+        <div className="card mb-3">
+          <div className="card-body">
+            <h4 className="fs-6 fw-bold mb-3 text-primary">Evolução Profissional</h4>
+            {dados.evolucao.length === 0 ? (
+              <p className="text-center text-secondary mb-0">Ainda sem conquistas registadas.</p>
+            ) : (
+              <div className="d-flex overflow-auto pb-2">
+                {dados.evolucao.map((e, i) => (
+                  <div key={i} className="d-flex align-items-center flex-shrink-0">
+                    <div className="text-center" style={{ width: 140 }}>
+                      <div className="rounded-circle mx-auto mb-2 bg-primary" style={{ width: 16, height: 16 }} />
+                      <div className="small fw-medium px-2" style={{ color: '#333' }}>{e.titulo}</div>
+                      <div className="text-secondary mt-1" style={{ fontSize: 11 }}>{formatarData(e.data)}</div>
+                    </div>
+                    {i < dados.evolucao.length - 1 && (
+                      <div style={{ width: 60, height: 2, background: '#e5e7eb', marginTop: -30, flexShrink: 0 }} />
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Evolução Profissional ── */}
-        <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 20 }}>
-          <h4 style={{ color: '#39639C', fontWeight: 700, marginBottom: 20, fontSize: 15 }}>Evolução Profissional</h4>
-          {dados.evolucao.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#aaa' }}>Ainda sem conquistas registadas.</p>
-          ) : (
-            <div style={{ display: 'flex', overflowX: 'auto', paddingBottom: 8 }}>
-              {dados.evolucao.map((e, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                  <div style={{ textAlign: 'center', width: 140 }}>
-                    <div style={{
-                      width: 16, height: 16, borderRadius: '50%', background: '#39639C',
-                      margin: '0 auto 10px',
-                    }} />
-                    <div style={{ fontSize: 12, color: '#333', fontWeight: 500, padding: '0 8px' }}>{e.titulo}</div>
-                    <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{formatarData(e.data)}</div>
-                  </div>
-                  {i < dados.evolucao.length - 1 && (
-                    <div style={{ width: 60, height: 2, background: '#e5e7eb', marginTop: -30, flexShrink: 0 }} />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* ── Ações ── */}
+        <div className="d-flex justify-content-end gap-2 mb-3">
+          <button onClick={exportarPerfil} className="btn btn-outline-primary btn-sm">Exportar Perfil</button>
+          <button onClick={exportarHistorico} className="btn btn-outline-primary btn-sm">Exportar Histórico</button>
         </div>
 
         <Footer />

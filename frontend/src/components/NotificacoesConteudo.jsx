@@ -103,61 +103,57 @@ export default function NotificacoesConteudo() {
     <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
       {/* ── Cabeçalho ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
         <div>
-          <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Notificações</h2>
-          <p style={{ color: '#9ca3af', fontSize: 12, margin: '4px 0 0' }}>
+          <h2 className="fw-bold mb-0 text-primary" style={{ fontSize: 22 }}>Notificações</h2>
+          <p className="text-secondary mb-0" style={{ fontSize: 12, marginTop: 4 }}>
             {naoLidasCount > 0 ? `${naoLidasCount} por ler` : 'Está tudo em dia'}
           </p>
         </div>
         {naoLidasCount > 0 && (
-          <button onClick={marcarTodasLidas} style={{
-            display: 'flex', alignItems: 'center', gap: 6, background: '#fff', color: '#39639C',
-            border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          }}>
+          <button onClick={marcarTodasLidas} className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
             <MdDoneAll /> Marcar todas como lidas
           </button>
         )}
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content', margin: '16px 0 20px' }}>
+      <ul className="nav nav-pills gap-1 mb-4" style={{ background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content', marginTop: 16 }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 12.5, fontWeight: 600,
-            cursor: 'pointer', background: tab === t.id ? '#fff' : 'transparent',
-            color: tab === t.id ? '#39639C' : '#9ca3af',
-            boxShadow: tab === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-          }}>
-            {t.label}{t.id === 'naoLidas' && naoLidasCount > 0 ? ` (${naoLidasCount})` : ''}
-          </button>
+          <li className="nav-item" key={t.id}>
+            <button onClick={() => setTab(t.id)} className={`nav-link small ${tab === t.id ? 'active' : ''}`}>
+              {t.label}{t.id === 'naoLidas' && naoLidasCount > 0 ? ` (${naoLidasCount})` : ''}
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* ── Lista ── */}
       {loading ? (
         <p style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>A carregar...</p>
       ) : filtradas.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 50, textAlign: 'center', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
+        <div className="card text-center" style={{ padding: 50 }}>
           <FiBell style={{ fontSize: 28, color: '#d1d5db', marginBottom: 10 }} />
           <p style={{ color: '#9ca3af', fontSize: 13, margin: 0 }}>
             {tab === 'naoLidas' ? 'Não há notificações por ler.' : 'Ainda não tens notificações.'}
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="d-flex flex-column gap-4">
           {ordemGrupos.filter(g => grupos[g]?.length).map(g => (
             <div key={g}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 10px' }}>{g}</p>
-              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 5px 40px rgba(237,237,237,1)', overflow: 'hidden' }}>
+              <div className="card" style={{ overflow: 'hidden' }}>
                 {grupos[g].map((n, i) => {
                   const iconeInfo = ICONE_POR_TIPO[n.tipoNotificacao] || ICONE_DEFEITO
                   return (
                     <div
                       key={n.id}
+                      role="button"
                       onClick={() => abrirNotificacao(n)}
+                      className="d-flex align-items-start gap-3"
                       style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 20px', cursor: 'pointer',
+                        padding: '16px 20px', cursor: 'pointer',
                         borderBottom: i !== grupos[g].length - 1 ? '1px solid #f3f4f6' : 'none',
                         background: n.lida ? '#fff' : '#f8fbff',
                       }}
@@ -179,7 +175,7 @@ export default function NotificacoesConteudo() {
                         <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>{tempoRelativo(n.data)}</p>
                       </div>
 
-                      {!n.lida && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#39639C', flexShrink: 0, marginTop: 6 }} />}
+                      {!n.lida && <span className="rounded-circle bg-primary flex-shrink-0" style={{ width: 8, height: 8, marginTop: 6 }} />}
                     </div>
                   )
                 })}
@@ -223,19 +219,13 @@ export default function NotificacoesConteudo() {
               {new Date(selecionada.data).toLocaleString('pt-PT')}
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="d-flex justify-content-end gap-2">
               {selecionada.lida && (
-                <button onClick={() => marcarNaoLida(selecionada.id)} style={{
-                  background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8,
-                  padding: '8px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                }}>
+                <button onClick={() => marcarNaoLida(selecionada.id)} className="btn btn-outline-primary btn-sm">
                   Marcar como não lida
                 </button>
               )}
-              <button onClick={() => setSelecionada(null)} style={{
-                background: '#39639C', color: '#fff', border: 'none', borderRadius: 8,
-                padding: '8px 16px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-              }}>
+              <button onClick={() => setSelecionada(null)} className="btn btn-primary btn-sm">
                 Fechar
               </button>
             </div>

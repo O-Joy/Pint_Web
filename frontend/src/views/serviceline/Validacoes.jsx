@@ -167,59 +167,53 @@ export default function Validacoes() {
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
         {/* ── Cabeçalho ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div className="d-flex justify-content-between align-items-start mb-1">
           <div>
-            <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Validações</h2>
-            <p style={{ color: '#39639C', fontWeight: 600, fontSize: 14, margin: '4px 0 0' }}>Pedidos Pendentes</p>
-            <p style={{ color: '#9ca3af', fontSize: 12, margin: '2px 0 0' }}>{pendentesCount} PEDIDOS</p>
+            <h2 className="fw-bold mb-0 text-primary" style={{ fontSize: 22 }}>Validações</h2>
+            <p className="fw-semibold mb-0 text-primary" style={{ fontSize: 14, marginTop: 4 }}>Pedidos Pendentes</p>
+            <p className="text-secondary mb-0" style={{ fontSize: 12, marginTop: 2 }}>{pendentesCount} PEDIDOS</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={exportarExcel} style={btnExport}>Exportar Excel</button>
-            <button onClick={exportarPDF} style={btnExport}>Exportar PDF</button>
+          <div className="d-flex gap-2">
+            <button onClick={exportarExcel} className="btn btn-outline-primary btn-sm">Exportar Excel</button>
+            <button onClick={exportarPDF} className="btn btn-outline-primary btn-sm">Exportar PDF</button>
           </div>
         </div>
 
         {/* ── Filtros ── */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '16px 0', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 240, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-            <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
+        <div className="d-flex align-items-center gap-2 flex-wrap" style={{ margin: '16px 0' }}>
+          <div className="input-group" style={{ flex: 1, minWidth: 240 }}>
+            <span className="input-group-text"><FiSearch className="text-secondary" /></span>
             <input
               value={filtro}
               onChange={e => setFiltro(e.target.value)}
               placeholder="Pesquisar Consultor, Badge, Requisito..."
-              style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }}
+              className="form-control"
             />
           </div>
 
-          <select value={filtroNivel} onChange={e => setFiltroNivel(e.target.value)} style={selectStyle}>
+          <select value={filtroNivel} onChange={e => setFiltroNivel(e.target.value)} className="form-select" style={{ width: 'auto' }}>
             <option value="todos">Nível - Todos</option>
             {niveis.map((n, i) => <option key={i} value={n}>{n}</option>)}
           </select>
 
-          <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 8, padding: 3 }}>
+          <ul className="nav nav-pills gap-1" style={{ background: '#f3f4f6', borderRadius: 8, padding: 3 }}>
             {[
               { id: 'todos', label: 'TODOS' },
               { id: 'aprovados', label: 'APROVADOS' },
               { id: 'rejeitados', label: 'REJEITADOS' },
             ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                style={{
-                  border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  background: tab === t.id ? '#fff' : 'transparent',
-                  color: tab === t.id ? '#39639C' : '#6b7280',
-                  boxShadow: tab === t.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                }}
-              >
-                {t.label}
-              </button>
+              <li className="nav-item" key={t.id}>
+                <button onClick={() => setTab(t.id)} className={`nav-link small ${tab === t.id ? 'active' : ''}`}>
+                  {t.label}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         {/* ── Tabela ── */}
-        <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 5px 40px rgba(237,237,237,1)', overflowX: 'auto' }}>
+        <div className="card">
+          <div className="table-responsive">
           {loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>A carregar...</div>
           ) : filtradas.length === 0 ? (
@@ -227,11 +221,11 @@ export default function Validacoes() {
               {tab === 'todos' ? 'Não há candidaturas para mostrar.' : `Não há candidaturas ${tab} de momento.`}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+            <table className="table table-hover align-middle mb-0">
               <thead>
-                <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                <tr>
                   {['ID Candidatura', 'Consultor', 'Badge', 'Nível', 'Data Submissão', 'SLA', 'Estado', 'Ações'].map((h, i) => (
-                    <th key={i} style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 600, color: '#6b7280', fontSize: 11.5, whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={i} className="text-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -242,16 +236,16 @@ export default function Validacoes() {
                   const horas = pendente ? horasDecorridas(c.dataCriacao) : null
                   const corSla = horas === null ? '#9ca3af' : horas <= 48 ? '#06A120' : horas <= 72 ? '#f59e0b' : '#AE0003'
                   return (
-                    <tr key={c.numCandidatura} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.numCandidatura}</td>
-                      <td style={{ padding: '11px 14px', fontWeight: 500, color: '#1a1a2e' }}>{c.nomeConsultor}</td>
-                      <td style={{ padding: '11px 14px', color: '#39639C' }}>{c.nomeBadge}</td>
-                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{c.nomeNivel}</td>
-                      <td style={{ padding: '11px 14px', color: '#6b7280' }}>{new Date(c.dataCriacao).toLocaleDateString('pt-PT')}</td>
-                      <td style={{ padding: '11px 14px' }}>
+                    <tr key={c.numCandidatura}>
+                      <td className="text-secondary">{c.numCandidatura}</td>
+                      <td className="fw-medium" style={{ color: '#1a1a2e' }}>{c.nomeConsultor}</td>
+                      <td className="text-primary">{c.nomeBadge}</td>
+                      <td className="text-secondary">{c.nomeNivel}</td>
+                      <td className="text-secondary">{new Date(c.dataCriacao).toLocaleDateString('pt-PT')}</td>
+                      <td>
                         <span style={{ color: corSla, fontWeight: 600 }}>{horas === null ? '—' : `${horas}h ●`}</span>
                       </td>
-                      <td style={{ padding: '11px 14px' }}>
+                      <td>
                         <span style={{
                           background: corEstado[c.nomeEstado]?.bg ?? '#f3f4f6',
                           color: corEstado[c.nomeEstado]?.color ?? '#6b7280',
@@ -277,6 +271,7 @@ export default function Validacoes() {
               </tbody>
             </table>
           )}
+          </div>
         </div>
 
         <Footer />
@@ -291,14 +286,18 @@ export default function Validacoes() {
             </h3>
 
             {/* Info consultor + badge */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
+            <div className="row g-3" style={{ marginBottom: 18 }}>
+              <div className="col-6">
               <div style={infoBox}>
                 <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Consultor:</div>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{selecionada.nomeConsultor}</div>
               </div>
+              </div>
+              <div className="col-6">
               <div style={infoBox}>
                 <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>Badge + Nível</div>
                 <div style={{ fontWeight: 600, fontSize: 13, color: '#39639C' }}>{selecionada.nomeBadge} {selecionada.nomeNivel}</div>
+              </div>
               </div>
             </div>
 
@@ -341,14 +340,15 @@ export default function Validacoes() {
               value={comentario}
               onChange={e => setComentario(e.target.value)}
               placeholder="Adicione um comentário..."
-              style={{ width: '100%', minHeight: 70, borderRadius: 8, border: '1px solid #d1d5db', padding: '8px 10px', fontSize: 12, resize: 'vertical', outline: 'none', marginBottom: 18, fontFamily: 'inherit' }}
+              className="form-control mb-3"
+              style={{ minHeight: 70, resize: 'vertical', boxShadow: 'none', border: '1px solid #d1d5db' }}
             />
 
             {/* Botões de ação */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmacao({ tipo: 'devolver' })} style={{ ...acaoBtn, border: '1px solid #39639C', background: '#fff', color: '#39639C' }}>Devolver</button>
-              <button onClick={() => setConfirmacao({ tipo: 'rejeitar' })} style={{ ...acaoBtn, background: '#AE0003', color: '#fff' }}>Rejeitar</button>
-              <button onClick={() => setConfirmacao({ tipo: 'validar' })} style={{ ...acaoBtn, background: '#06A120', color: '#fff' }}>Validar</button>
+            <div className="d-flex justify-content-end gap-2">
+              <button onClick={() => setConfirmacao({ tipo: 'devolver' })} className="btn btn-outline-primary btn-sm">Devolver</button>
+              <button onClick={() => setConfirmacao({ tipo: 'rejeitar' })} className="btn btn-danger btn-sm">Rejeitar</button>
+              <button onClick={() => setConfirmacao({ tipo: 'validar' })} className="btn btn-success btn-sm">Validar</button>
             </div>
           </div>
         </Overlay>
@@ -364,11 +364,11 @@ export default function Validacoes() {
               {confirmacao.tipo === 'rejeitar' && `Esta ação não pode ser revertida. A candidatura ${selecionada?.numCandidatura} será rejeitada e o consultor será notificado.`}
               {confirmacao.tipo === 'devolver' && `Esta ação não pode ser revertida. A candidatura ${selecionada?.numCandidatura} será devolvida para o consultor.`}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setConfirmacao(null)} style={{ ...acaoBtn, background: '#f3f4f6', color: '#6b7280' }}>Cancelar</button>
-              {confirmacao.tipo === 'validar'  && <button onClick={validar} style={{ ...acaoBtn, background: '#06A120', color: '#fff' }}>Validar</button>}
-              {confirmacao.tipo === 'rejeitar' && <button onClick={rejeitar} style={{ ...acaoBtn, background: '#AE0003', color: '#fff' }}>Rejeitar</button>}
-              {confirmacao.tipo === 'devolver' && <button onClick={devolver} style={{ ...acaoBtn, background: '#f59e0b', color: '#fff' }}>Devolver</button>}
+            <div className="d-flex justify-content-end gap-2">
+              <button onClick={() => setConfirmacao(null)} className="btn btn-light btn-sm">Cancelar</button>
+              {confirmacao.tipo === 'validar'  && <button onClick={validar} className="btn btn-success btn-sm">Validar</button>}
+              {confirmacao.tipo === 'rejeitar' && <button onClick={rejeitar} className="btn btn-danger btn-sm">Rejeitar</button>}
+              {confirmacao.tipo === 'devolver' && <button onClick={devolver} className="btn btn-warning btn-sm text-white">Devolver</button>}
             </div>
           </div>
         </Overlay>
@@ -404,11 +404,8 @@ function Overlay({ children, onClose }) {
 }
 
 // ── Estilos reutilizados ──
-const btnExport = { background: '#fff', border: '1.5px solid #39639C', borderRadius: 12, padding: '8px 16px', fontSize: 13, fontWeight: 500, color: '#39639C', cursor: 'pointer' }
-const selectStyle = { background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }
 const infoBox = { background: '#f9fafb', borderRadius: 8, padding: '10px 12px' }
 const subTitulo = { fontSize: 12, fontWeight: 600, color: '#374151', margin: '0 0 8px' }
-const acaoBtn = { border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }
 const fecharBtn = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
 
 const corEstado = {

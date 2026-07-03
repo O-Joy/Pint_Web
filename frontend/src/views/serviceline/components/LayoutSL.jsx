@@ -3,7 +3,7 @@ import Sidebar, {icons} from "../../../components/Sidebar";
 
 const NAV_ITEMS = [
   { label: 'Dashboard',    path: '/serviceline/dashboard',    icon: icons.dashboard },
-  { label: 'Validações',   path: '/serviceline/validacoesSL',   icon: icons.validacoes },
+  { label: 'Validações',   path: '/serviceline/validacoes',   icon: icons.validacoes },
   { label: 'Badges',       path: '/serviceline/badges',       icon: icons.badges },
   { label: 'Consultores',  path: '/serviceline/consultores',  icon: icons.utilizadores },
   { label: 'Relatórios',   path: '/serviceline/relatorios',   icon: icons.relatorios },

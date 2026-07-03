@@ -3,6 +3,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import './views/serviceline/styles.css'
 import './App.css'
 import Perfil from './components/Perfil'
 import Definicoes from './components/Definicoes'
@@ -21,6 +22,7 @@ import DashboardAdmin from './views/admin/Dashboard'
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
 import Consultores from './views/serviceline/Consultores'
+import ConsultorDetalhe from './views/serviceline/ConsultorDetalhe'
 import ValidacoesSL from './views/serviceline/Validacoes'
 import Relatorios from './views/serviceline/Relatorios'
 import Gamification from './views/serviceline/Gamification'
@@ -127,13 +129,6 @@ function App() {
           </ProtectedRoute>
         } />*/}
 
-        {/* Rotas do Service Line Leader — só perfil 'sl_leader' tem acesso */}
-        <Route path="/serviceline/dashboard" element={
-          <ProtectedRoute perfisPermitidos={['sl_leader']}>
-            <DashboardServiceLine />
-          </ProtectedRoute>
-        } />
-
         {/* Rotas do Service Line Leader */}
         <Route path="/serviceline/dashboard" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
@@ -153,6 +148,11 @@ function App() {
         <Route path="/serviceline/consultores" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
             <Consultores/>
+          </ProtectedRoute>
+        } />
+        <Route path="/serviceline/consultores/:id" element={
+          <ProtectedRoute perfisPermitidos={['sl_leader']}>
+            <ConsultorDetalhe/>
           </ProtectedRoute>
         } />
         <Route path="/serviceline/relatorios" element={

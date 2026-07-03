@@ -188,26 +188,21 @@ export default function Relatorios() {
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
         {/* ── Cabeçalho ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
-          <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Relatórios</h2>
-          <button onClick={exportarRelatorioAnterior} style={btnOutline}>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 className="fw-bold mb-0 text-primary" style={{ fontSize: 22 }}>Relatórios</h2>
+          <button onClick={exportarRelatorioAnterior} className="btn btn-outline-primary btn-sm">
             Exportar Relatório Anterior
           </button>
         </div>
 
         {/* ── KPIs ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+        <div className="row g-3" style={{ marginBottom: 20 }}>
           {KPI_CARDS.map((c, i) => (
-            <div key={i} style={{
-              background: '#fff', borderRadius: 14, padding: '18px 18px',
-              display: 'flex', alignItems: 'center', gap: 14,
-              boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0',
-            }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 10, background: '#e8f0fb',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, color: '#39639C', flexShrink: 0,
-              }}>
+            <div key={i} className="col-12 col-sm-6 col-lg-3">
+            <div className="card h-100">
+              <div className="card-body d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 text-primary"
+                style={{ width: 42, height: 42, background: '#e8f0fb', fontSize: 20 }}>
                 {c.icon}
               </div>
               <div>
@@ -215,39 +210,32 @@ export default function Relatorios() {
                 <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, fontWeight: 600, letterSpacing: 0.3 }}>{c.label}</div>
                 {c.nota && <div style={{ fontSize: 11, color: c.corNota, marginTop: 2, fontWeight: 600 }}>{c.nota}</div>}
               </div>
+              </div>
+            </div>
             </div>
           ))}
         </div>
 
         {/* ── Tabs de gráfico + filtros ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content' }}>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+          <ul className="nav nav-pills gap-1" style={{ background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content' }}>
             {GRAFICO_TABS.map(t => (
-              <button key={t.id} onClick={() => setGrafico(t.id)} style={{
-                border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.3,
-                background: grafico === t.id ? '#fff' : 'transparent',
-                color: grafico === t.id ? '#39639C' : '#9ca3af',
-                boxShadow: grafico === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-              }}>
-                {t.label}
-              </button>
+              <li className="nav-item" key={t.id}>
+                <button onClick={() => setGrafico(t.id)} className={`nav-link small text-uppercase ${grafico === t.id ? 'active' : ''}`} style={{ letterSpacing: 0.3 }}>
+                  {t.label}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', borderRadius: 10, padding: '0 12px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-              <FiCalendar style={{ color: '#9ca3af', flexShrink: 0 }} />
-              <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-                style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
-              <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
-              <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
-                style={{ border: 'none', outline: 'none', fontSize: 12, padding: '9px 4px', color: '#555' }} />
+          <div className="d-flex gap-2 flex-wrap">
+            <div className="input-group" style={{ width: 'auto' }}>
+              <span className="input-group-text"><FiCalendar className="text-secondary" /></span>
+              <input type="date" className="form-control" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="input-group-text">–</span>
+              <input type="date" className="form-control" value={dataFim} onChange={e => setDataFim(e.target.value)} />
             </div>
-            <select value={nivel} onChange={e => setNivel(e.target.value)} style={{
-              background: '#fff', border: 'none', borderRadius: 10, padding: '9px 14px', fontSize: 12,
-              outline: 'none', color: '#374151', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)',
-            }}>
+            <select value={nivel} onChange={e => setNivel(e.target.value)} className="form-select" style={{ width: 'auto' }}>
               {NIVEIS.map(n => <option key={n} value={n}>{n === 'Todos' ? 'Nível - Todos' : n}</option>)}
             </select>
           </div>
@@ -257,13 +245,14 @@ export default function Relatorios() {
         {loading ? (
           <div style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>A carregar...</div>
         ) : grafico === 'evolucao' ? (
-          <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-body">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Evolução Mensal</h4>
                 <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Badges atribuídos na sua Service Line em cada mês</p>
               </div>
-              <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+              <button onClick={gerarRelatorioGrafico} className="btn btn-outline-primary btn-sm flex-shrink-0">Gerar Relatório</button>
             </div>
             {evolucao.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados no período selecionado.</p>
@@ -287,15 +276,17 @@ export default function Relatorios() {
                 }}
               />
             )}
+            </div>
           </div>
         ) : grafico === 'area' ? (
-          <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-body">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
                 <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Badges por Área</h4>
                 <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Quantidade de badges que tem cada área na sua Service Line</p>
               </div>
-              <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+              <button onClick={gerarRelatorioGrafico} className="btn btn-outline-primary btn-sm flex-shrink-0">Gerar Relatório</button>
             </div>
             {porArea.areas.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados disponíveis.</p>
@@ -320,16 +311,19 @@ export default function Relatorios() {
                 }}
               />
             )}
+            </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-            <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <div className="row g-4" style={{ marginBottom: 24 }}>
+            <div className="col-12 col-lg-6">
+            <div className="card h-100">
+              <div className="card-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
                   <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Badges por Nível</h4>
                   <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Percentagem de badges disponíveis em cada nível na sua Service Line</p>
                 </div>
-                <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+                <button onClick={gerarRelatorioGrafico} className="btn btn-outline-primary btn-sm flex-shrink-0">Gerar Relatório</button>
               </div>
               {porNivel.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#aaa', padding: '30px 0' }}>Sem dados disponíveis.</p>
@@ -348,15 +342,19 @@ export default function Relatorios() {
                   }}
                 />
               )}
+              </div>
+            </div>
             </div>
 
-            <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div className="col-12 col-lg-6">
+            <div className="card h-100">
+              <div className="card-body">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
                   <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 14, margin: 0, textTransform: 'uppercase', letterSpacing: 0.3 }}>Cumprimento de SLA</h4>
                   <p style={{ color: '#9ca3af', fontSize: 11, margin: '4px 0 0' }}>Percentagem de badges atribuídos dentro do prazo na sua Service Line</p>
                 </div>
-                <button onClick={gerarRelatorioGrafico} style={btnOutlineSmall}>Gerar Relatório</button>
+                <button onClick={gerarRelatorioGrafico} className="btn btn-outline-primary btn-sm flex-shrink-0">Gerar Relatório</button>
               </div>
               <div style={{ position: 'relative', width: 220, height: 220, margin: '10px auto 0' }}>
                 <Doughnut
@@ -378,27 +376,30 @@ export default function Relatorios() {
                 </div>
               </div>
             </div>
+            </div>
+            </div>
           </div>
         )}
 
         {/* ── Exportar Dados ── */}
         <div style={{ marginTop: 8 }}>
           <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Exportar Dados</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          <div className="row g-3">
             {Object.values(EXPORTACOES).map((e, i) => (
-              <div key={i} style={{
-                background: '#fff', borderRadius: 14, padding: '20px 18px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)', textAlign: 'center',
-              }}>
+              <div key={i} className="col-12 col-sm-6 col-lg-3">
+              <div className="card text-center">
+                <div className="card-body">
                 <p style={{ fontWeight: 700, fontSize: 12, color: '#333', letterSpacing: 0.5, marginBottom: 16 }}>{e.titulo}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'excel')} style={btnExport}>
-                    <FiDownload style={{ marginRight: 5 }} /> Exportar Excel
+                <div className="d-flex flex-column gap-2">
+                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'excel')} className="btn btn-outline-primary btn-sm">
+                    <FiDownload className="me-1" /> Exportar Excel
                   </button>
-                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'pdf')} style={btnExport}>
-                    <FiDownload style={{ marginRight: 5 }} /> Exportar PDF
+                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'pdf')} className="btn btn-outline-primary btn-sm">
+                    <FiDownload className="me-1" /> Exportar PDF
                   </button>
                 </div>
+                </div>
+              </div>
               </div>
             ))}
           </div>
@@ -408,21 +409,4 @@ export default function Relatorios() {
       </div>
     </LayoutSL>
   )
-}
-
-const btnExport = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  background: '#fff', border: '1.5px solid #39639C',
-  borderRadius: 10, padding: '8px 14px',
-  fontSize: 12, fontWeight: 500, color: '#39639C', cursor: 'pointer',
-}
-
-const btnOutline = {
-  background: '#fff', color: '#39639C', border: '1px solid #39639C',
-  borderRadius: 10, padding: '9px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-}
-
-const btnOutlineSmall = {
-  background: '#fff', color: '#39639C', border: '1px solid #39639C',
-  borderRadius: 8, padding: '6px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
 }

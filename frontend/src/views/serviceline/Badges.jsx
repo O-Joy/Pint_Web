@@ -157,31 +157,37 @@ export default function Badges() {
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
         {/* ── Cabeçalho ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+        <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
           <div>
-            <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Badges</h2>
-            <p style={{ color: '#9ca3af', fontSize: 13, margin: '4px 0 0' }}>{regularesFiltrados.length + especiaisFiltrados.length} badges disponíveis</p>
+            <h2 className="fw-bold mb-0 text-primary" style={{ fontSize: 22 }}>Badges</h2>
+            <p className="text-secondary small mt-1 mb-0">{regularesFiltrados.length + especiaisFiltrados.length} badges disponíveis</p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={exportarExcel} style={btnExport}>Exportar Excel</button>
-            <button onClick={exportarPDF} style={btnExport}>Exportar PDF</button>
+          <div className="d-flex gap-2">
+            <button onClick={exportarExcel} className="btn btn-outline-primary btn-sm">Exportar Excel</button>
+            <button onClick={exportarPDF} className="btn btn-outline-primary btn-sm">Exportar PDF</button>
           </div>
         </div>
 
         {/* ── Filtros ── */}
-        <div style={{ display: 'flex', gap: 10, margin: '16px 0', flexWrap: 'wrap' }}>
-          <div style={{ flex: 2, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-            <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
-            <input value={filtro} onChange={e => { setFiltro(e.target.value); setPagina(1) }} placeholder="Pesquisar badges,..." style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }} />
+        <div className="row g-2" style={{ margin: '16px 0' }}>
+          <div className="col-12 col-md-6">
+            <div className="input-group">
+              <span className="input-group-text"><FiSearch className="text-secondary" /></span>
+              <input value={filtro} onChange={e => { setFiltro(e.target.value); setPagina(1) }} placeholder="Pesquisar badges,..." className="form-control" />
+            </div>
           </div>
-          <select value={filtroNivel} onChange={e => { setFiltroNivel(e.target.value); setPagina(1) }} style={selectStyle}>
-            <option value="todos">Todos os badges</option>
-            {niveis.map((n, i) => <option key={i} value={n}>{n}</option>)}
-          </select>
-          <select value={filtroSL} onChange={e => { setFiltroSL(e.target.value); setPagina(1) }} style={selectStyle}>
-            <option value="todas">Todas Service Lines</option>
-            {servicelines.map((s, i) => <option key={i} value={s}>{s}</option>)}
-          </select>
+          <div className="col-6 col-md-3">
+            <select value={filtroNivel} onChange={e => { setFiltroNivel(e.target.value); setPagina(1) }} className="form-select">
+              <option value="todos">Todos os badges</option>
+              {niveis.map((n, i) => <option key={i} value={n}>{n}</option>)}
+            </select>
+          </div>
+          <div className="col-6 col-md-3">
+            <select value={filtroSL} onChange={e => { setFiltroSL(e.target.value); setPagina(1) }} className="form-select">
+              <option value="todas">Todas Service Lines</option>
+              {servicelines.map((s, i) => <option key={i} value={s}>{s}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* ── Cards Regulares ── */}
@@ -195,7 +201,7 @@ export default function Badges() {
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 20 }}>
                   {paginaAtual.map(b => (
-                    <CardBadge key={b.id} b={b} onInformacoes={() => abrirModal(b)} />
+                    <CardBadge key={b.id} b={b} onInfo={() => abrirModal(b)} />
                   ))}
                 </div>
 
@@ -226,7 +232,7 @@ export default function Badges() {
                 <div style={{ color: '#9ca3af', fontSize: 14 }}>Nenhum badge especial disponível.</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-                  {especiaisFiltrados.map(b => <CardBadge key={b.id} b={b} especial onInformacoes={() => abrirModal(b)} />)}
+                  {especiaisFiltrados.map(b => <CardBadge key={b.id} b={b} especial onInfo={() => abrirModal(b)} />)}
                 </div>
               )}
             </div>
@@ -235,42 +241,44 @@ export default function Badges() {
             {historico.length > 0 && (
               <div>
                 <h3 style={{ color: '#39639C', fontWeight: 700, fontSize: 18, margin: '0 0 14px' }}>Histórico</h3>
-                <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+                <ul className="nav nav-pills gap-1 mb-3" style={{ background: '#f3f4f6', borderRadius: 10, padding: 4, width: 'fit-content' }}>
                   {['TODOS', 'OBTIDOS', 'EM PROCESSO'].map(t => (
-                    <button key={t} onClick={() => setTabHistorico(t)} style={{ ...btnTab, background: tabHistorico === t ? '#fff' : 'transparent', color: tabHistorico === t ? '#39639C' : '#9ca3af', boxShadow: tabHistorico === t ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>
-                      {t}
-                    </button>
+                    <li className="nav-item" key={t}>
+                      <button onClick={() => setTabHistorico(t)} className={`nav-link small ${tabHistorico === t ? 'active' : ''}`}>
+                        {t}
+                      </button>
+                    </li>
                   ))}
-                </div>
-                <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f0f0f0', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        {['Badge', 'Área', 'Nível', 'Consultor', 'Estado'].map((h, i) => (
-                          <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historicoFiltrado.map((h, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                          <td style={{ padding: '11px 16px', color: '#1a1a2e' }}>{h.nomeBadge}</td>
-                          <td style={{ padding: '11px 16px', color: '#6b7280' }}>{h.nomeArea}</td>
-                          <td style={{ padding: '11px 16px', color: '#6b7280' }}>{h.nomeNivel}</td>
-                          <td style={{ padding: '11px 16px', color: '#6b7280' }}>{h.nomeConsultor}</td>
-                          <td style={{ padding: '11px 16px' }}>
-                            <span style={{
-                              background: corEstadoHistorico[h.nomeEstado]?.bg ?? '#f3f4f6',
-                              color: corEstadoHistorico[h.nomeEstado]?.color ?? '#6b7280',
-                              borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                            }}>
-                              {h.nomeEstado || '-'}
-                            </span>
-                          </td>
+                </ul>
+                <div className="card">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead>
+                        <tr>
+                          {['Badge', 'Área', 'Nível', 'Consultor', 'Estado'].map((h, i) => <th key={i}>{h}</th>)}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {historicoFiltrado.map((h, i) => (
+                          <tr key={i}>
+                            <td style={{ color: '#1a1a2e' }}>{h.nomeBadge}</td>
+                            <td className="text-secondary">{h.nomeArea}</td>
+                            <td className="text-secondary">{h.nomeNivel}</td>
+                            <td className="text-secondary">{h.nomeConsultor}</td>
+                            <td>
+                              <span style={{
+                                background: corEstadoHistorico[h.nomeEstado]?.bg ?? '#f3f4f6',
+                                color: corEstadoHistorico[h.nomeEstado]?.color ?? '#6b7280',
+                                borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                              }}>
+                                {h.nomeEstado || '-'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -323,15 +331,15 @@ export default function Badges() {
 
             {selecionado.especial ? (
               /* ── Badge Especial: sem requisitos, botão de certificado ── */
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+              <div className="form-check d-flex align-items-center gap-2 border rounded p-2" style={{ paddingLeft: '2.5em' }}>
                 <input
                   type="checkbox"
+                  className="form-check-input"
                   checked={certificadoMarcado}
                   onChange={() => { setCertificadoMarcado(true); gerarCertificado(selecionado) }}
-                  style={{ width: 16, height: 16, cursor: 'pointer' }}
                 />
-                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Descarregar Certificado</span>
-              </label>
+                <label className="form-check-label small fw-medium" style={{ color: '#374151' }}>Descarregar Certificado</label>
+              </div>
             ) : (
               /* ── Badge Regular: acordeão de requisitos ── */
               <>
@@ -404,8 +412,5 @@ function Overlay({ children, onClose }) {
   )
 }
 
-const btnExport  = { background: '#fff', border: '1.5px solid #39639C', borderRadius: 12, padding: '8px 20px', fontSize: 13, fontWeight: 500, color: '#39639C', cursor: 'pointer' }
-const selectStyle = { background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }
 const fecharBtn  = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
 const btnPag     = { display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, color: '#374151', cursor: 'pointer', boxShadow: '0 2px 12px rgba(237,237,237,1)' }
-const btnTab     = { border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }

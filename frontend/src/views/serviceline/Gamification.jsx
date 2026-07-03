@@ -67,9 +67,9 @@ export default function Gamification() {
   })
 
     useEffect(() => {
-        api.get('/sl/gamification/todos') // <- Mudei aqui!
+        api.get('/sl/gamification/todos') 
         .then(res => setConsultores(Array.isArray(res.data) ? res.data : []))
-        .catch((err) => console.error("Erro ao carregar ranking global:", err)) // Adicionei um console.error para te ajudar a ver erros caso a rota falhe
+        .catch((err) => console.error("Erro ao carregar ranking global:", err)) 
         .finally(() => setLoading(false))
 
         api.get('/sl/gamification/estatisticas')
@@ -126,38 +126,37 @@ export default function Gamification() {
       <div style={{ fontFamily: 'Poppins, sans-serif', color: '#333' }}>
         
         {/* ── HEADER E PESQUISA ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ color: '#39639C', fontWeight: 700,fontSize: '22px', margin: 0, textTransform: 'uppercase' }}>Gamification</h2>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={exportarExcel} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
-              Exportar Excel
-            </button>
-            <button onClick={exportarPDF} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
-              Exportar PDF
-            </button>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h2 className="fw-bold mb-0 text-primary text-uppercase" style={{ fontSize: 22 }}>Gamification</h2>
+          <div className="d-flex gap-2">
+            <button onClick={exportarExcel} className="btn btn-outline-primary btn-sm">Exportar Excel</button>
+            <button onClick={exportarPDF} className="btn btn-outline-primary btn-sm">Exportar PDF</button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', width: 400, maxWidth: '100%', marginBottom: 24, boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-          <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
+        <div className="input-group mb-4" style={{ width: 400, maxWidth: '100%' }}>
+          <span className="input-group-text"><FiSearch className="text-secondary" /></span>
           <input
             value={filtro}
             onChange={e => setFiltro(e.target.value)}
             placeholder="Pesquisar Consultor..."
-            style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }}
+            className="form-control"
           />
         </div>
 
         {/* ── KPIs ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div className="row g-3" style={{ marginBottom: 24 }}>
           {[
             { label: 'MELHOR PONTUAÇÃO', valor: melhorPontuacao, sub: null },
             { label: 'CRESCIMENTO MÉDIO', valor: `${estatisticas.crescimentoMedio}%`, sub: null },
             { label: 'TOTAL CONSULTORES', valor: consultores.length, sub: `+${estatisticas.novosConsultoresMes} ESTE MÊS` },
             { label: 'BADGES APROVADOS', valor: totalBadgesAprovados, sub: `${estatisticas.badgesAprovadosVariacao > 0 ? '+' : ''}${estatisticas.badgesAprovadosVariacao}% ESTE MÊS` },
           ].map((kpi, i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 12, padding: '20px', display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: 40, height: 40, background: '#f0f4f8', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#39639C', fontSize: 20 }}>
+            <div key={i} className="col-12 col-sm-6 col-lg-3">
+            <div className="card h-100">
+              <div className="card-body d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 text-primary"
+                style={{ width: 40, height: 40, background: '#f0f4f8', fontSize: 20 }}>
                 <MdInsertChartOutlined />
               </div>
               <div>
@@ -165,15 +164,19 @@ export default function Gamification() {
                 <div style={{ fontSize: 10, color: '#666', fontWeight: 600 }}>{kpi.label}</div>
                 {kpi.sub && <div style={{ fontSize: 9, color: '#a0a0a0', marginTop: 2 }}>{kpi.sub}</div>}
               </div>
+              </div>
+            </div>
             </div>
           ))}
         </div>
 
         {/* ── PÓDIO TOP 3 E GRÁFICO ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        <div className="row g-4" style={{ marginBottom: 24 }}>
           
+          <div className="col-12 col-lg-6">
           {/* Pódio Top 3 Exato */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div className="card h-100">
+            <div className="card-body">
             <h4 style={{ fontSize: 14, fontWeight: 700, color: '#39639C', marginBottom: 40 }}>TOP 3</h4>
             
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '8px', height: '170px', paddingBottom: '16px' }}>
@@ -220,10 +223,14 @@ export default function Gamification() {
                 </div>
               </div>
             </div>
+            </div>
+          </div>
           </div>
 
+          <div className="col-12 col-lg-6">
           {/* Gráfico */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div className="card h-100">
+            <div className="card-body">
             <h4 style={{ fontSize: 14, fontWeight: 700, color: '#39639C', marginBottom: 16 }}>Total de Pontos na sua área</h4>
             <div style={{ height: 180 }}>
               <Line 
@@ -252,6 +259,8 @@ export default function Gamification() {
                 }}
               />
             </div>
+            </div>
+          </div>
           </div>
         </div>
 
@@ -259,54 +268,50 @@ export default function Gamification() {
         <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: 24 }}>
           
           {/* Tabela */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: '24px', border: '1px solid #f0f0f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+          <div className="card">
+            <div className="card-body">
              {loading ? (
                 <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar ranking...</p>
               ) : rankingFiltrado.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#aaa' }}>Nenhum consultor encontrado.</p>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="table table-hover align-middle mb-0">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                      <th style={{ padding: '12px 8px', textAlign: 'center', color: '#1e293b', fontWeight: 600 }}>Posição</th>
-                      <th style={{ padding: '12px 8px', textAlign: 'left', color: '#1e293b', fontWeight: 600 }}>Consultor</th>
-                      <th style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b', fontWeight: 600 }}>Pontos</th>
-                      <th style={{ padding: '12px 8px', textAlign: 'center', color: '#1e293b', fontWeight: 600 }}>Evolução</th>
+                    <tr>
+                      <th className="text-center">Posição</th>
+                      <th>Consultor</th>
+                      <th className="text-end">Pontos</th>
+                      <th className="text-center">Evolução</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rankingFiltrado.map((c) => (
-                      <tr 
-                        key={c.idUtilizador} 
-                        style={{ 
-                          borderBottom: '1px solid #f9f9f9', 
-                          // Se for da equipa, pinta de cinzento claro, senão fundo normal (branco)
-                          background: c.isMinhaSL ? '#f1f5f9' : '#fff' 
-                        }}
-                      >
-                        <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 700, color: '#39639C' }}>
+                      <tr key={c.idUtilizador} style={{ background: c.isMinhaSL ? '#f1f5f9' : '#fff' }}>
+                        <td className="text-center fw-bold text-primary">
                           {c.posicao}º
                         </td>
-                        <td style={{ padding: '12px 8px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ 
-                            width: 24, height: 24, borderRadius: '50%', 
-                            background: c.isMinhaSL ? '#cbd5e1' : '#e2e8f0', // Avatar um pouco mais escuro se for da equipa
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                            fontSize: 10, color: '#64748b' 
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                          <div style={{
+                            width: 24, height: 24, borderRadius: '50%',
+                            background: c.isMinhaSL ? '#cbd5e1' : '#e2e8f0',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, color: '#64748b',
                           }}>
                             {c.nome?.[0]}
                           </div>
-                          <span style={{ 
-                            fontWeight: c.isMinhaSL ? 600 : 400, 
-                            color: c.isMinhaSL ? '#39639C' : '#1e293b' 
+                          <span style={{
+                            fontWeight: c.isMinhaSL ? 600 : 400,
+                            color: c.isMinhaSL ? '#39639C' : '#1e293b',
                           }}>
                             {c.nome}
                           </span>
+                          </div>
                         </td>
-                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#64748b' }}>
+                        <td className="text-end text-secondary">
                           {c.totalPontos} pts
                         </td>
-                        <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 600, color: c.evolucao > 0 ? '#22c55e' : '#ef4444' }}>
+                        <td className="text-center" style={{ fontWeight: 600, color: c.evolucao > 0 ? '#22c55e' : '#ef4444' }}>
                           {c.evolucao > 0 ? `+${c.evolucao}` : c.evolucao}
                         </td>
                       </tr>
@@ -314,6 +319,7 @@ export default function Gamification() {
                   </tbody>
                 </table>
               )}
+            </div>
           </div>
 
           {/* Outras Estatísticas com StatCard Animado e com Gradientes */}

@@ -19,15 +19,7 @@ export default function CardBadge({ b, especial, onInfo, onRenovar, corIndicador
   const temValidade = !!b.validadeDias
 
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: 14,
-      padding: 20,
-      boxShadow: '0 5px 40px rgba(237,237,237,1)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 10,
-    }}>
+    <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* Imagem + tag nível/especial */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{
@@ -40,8 +32,8 @@ export default function CardBadge({ b, especial, onInfo, onRenovar, corIndicador
           }
         </div>
         {especial
-          ? <span style={{ background: '#f3f4f6', color: '#6b7280', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>Especial</span>
-          : nivel && <span style={{ background: cores.bg, color: cores.color, borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 600 }}>{nivel}</span>
+          ? <span className="badge rounded-pill" style={{ background: '#f3f4f6', color: '#6b7280', fontSize: 11 }}>Especial</span>
+          : nivel && <span className="badge rounded-pill" style={{ background: cores.bg, color: cores.color, fontSize: 11 }}>{nivel}</span>
         }
       </div>
 
@@ -71,12 +63,12 @@ export default function CardBadge({ b, especial, onInfo, onRenovar, corIndicador
         </div>
       )}
 
-      <button onClick={onInfo} style={{ background: '#39639C', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginTop: 'auto' }}>
+      <button onClick={onInfo} className="btn btn-primary w-100" style={{ marginTop: 'auto' }}>
         Informações
       </button>
 
       {onRenovar && (
-        <button onClick={onRenovar} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 0', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={onRenovar} className="btn btn-outline-primary w-100">
           Renovar
         </button>
       )}

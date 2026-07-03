@@ -26,18 +26,12 @@ export default function Consultores() {
 
   useEffect(() => {
     api.get('/sl/consultores')
-      .then(res => {
-        setConsultores(Array.isArray(res.data) ? res.data : [])
-      })
-      .catch(err => {
-        console.error('[Consultores] ERRO:', err.response?.status, err.response?.data || err.message)
-      })
+      .then(res => setConsultores(Array.isArray(res.data) ? res.data : []))
+      .catch(err => console.error('[Consultores] ERRO:', err.response?.status, err.response?.data || err.message))
       .finally(() => setLoading(false))
   }, [])
 
-  // a API já devolve ordenado por pontos (desc) — a posição vem do índice original
   const ranking = consultores.map((c, i) => ({ ...c, posicao: i + 1 }))
-
   const areas = [...new Set(ranking.map(c => c.nomeArea).filter(Boolean))]
 
   const filtrados = ranking.filter(c => {
@@ -62,14 +56,9 @@ export default function Consultores() {
 
   const exportarExcel = () => {
     const dados = filtrados.map(c => ({
-      'Posição': c.posicao,
-      'Nome': c.nome,
-      'Email': c.email,
-      'Área': c.nomeArea,
-      'Service Line': c.nomeServiceLine,
-      'Badges Obtidos': c.totalBadges,
-      'Badges Em Processo': c.badgesEmProcesso,
-      'Pontos Totais': c.totalPontos,
+      'Posição': c.posicao, 'Nome': c.nome, 'Email': c.email, 'Área': c.nomeArea,
+      'Service Line': c.nomeServiceLine, 'Badges Obtidos': c.totalBadges,
+      'Badges Em Processo': c.badgesEmProcesso, 'Pontos Totais': c.totalPontos,
       'Última Atividade': formatarData(c.ultimaAtividade),
     }))
     const ws = XLSX.utils.json_to_sheet(dados)
@@ -95,130 +84,136 @@ export default function Consultores() {
     doc.save('consultores.pdf')
   }
 
+  const CARTOES = [
+    { label: 'Consultores', valor: consultores.length, icon: <MdPerson /> },
+    { label: 'Badges Atribuídos', valor: totalBadges, icon: <MdMilitaryTech /> },
+    { label: 'Pontos Acumulados', valor: totalPontos, icon: <MdMilitaryTech /> },
+  ]
+
   return (
     <LayoutSL>
       <div style={{ fontFamily: 'Poppins, sans-serif' }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+        <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
           <div>
-            <h2 style={{ color: '#39639C', fontWeight: 700, fontSize: 22, margin: 0 }}>Consultores</h2>
-            <p style={{ color: '#6b7280', fontSize: 13 }}>{consultores.length} consultores na sua Service Line</p>
+            <h2 className="fw-bold mb-0 text-primary" style={{ fontSize: 22 }}>Consultores</h2>
+            <p className="text-secondary small mb-0">{consultores.length} consultores na sua Service Line</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={exportarExcel} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
-              Exportar Excel
-            </button>
-            <button onClick={exportarPDF} style={{ background: '#fff', color: '#39639C', border: '1px solid #39639C', borderRadius: 8, padding: '8px 16px', fontSize: 12, cursor: 'pointer' }}>
-              Exportar PDF
-            </button>
+          <div className="d-flex gap-2">
+            <button onClick={exportarExcel} className="btn btn-outline-primary btn-sm">Exportar Excel</button>
+            <button onClick={exportarPDF} className="btn btn-outline-primary btn-sm">Exportar PDF</button>
           </div>
         </div>
 
         {/* ── Resumo ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '20px 0 28px' }}>
-          {[
-            { label: 'Consultores', valor: consultores.length, icon: <MdPerson style={{ color: '#39639C', fontSize: 22 }} /> },
-            { label: 'Badges Atribuídos', valor: totalBadges, icon: <MdMilitaryTech style={{ color: '#39639C', fontSize: 22 }} /> },
-            { label: 'Pontos Acumulados', valor: totalPontos, icon: <MdMilitaryTech style={{ color: '#39639C', fontSize: 22 }} /> },
-          ].map((c, i) => (
-            <div key={i} style={{
-              background: '#fff', borderRadius: 16, padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 14,
-              boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0',
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, background: '#e8f0fb',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, color: '#39639C', flexShrink: 0,
-              }}>
-                {c.icon}
-              </div>
-              <div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{c.valor}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{c.label}</div>
+        <div className="row g-3" style={{ margin: '20px 0 28px' }}>
+          {CARTOES.map((c, i) => (
+            <div key={i} className="col-12 col-md-4">
+              <div className="card h-100">
+                <div className="card-body d-flex align-items-center gap-3">
+                  <div className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 text-primary"
+                    style={{ width: 44, height: 44, background: '#e8f0fb', fontSize: 20 }}>
+                    {c.icon}
+                  </div>
+                  <div>
+                    <div className="fw-bold fs-4 lh-1" style={{ color: '#1a1a2e' }}>{c.valor}</div>
+                    <div className="text-secondary small mt-1">{c.label}</div>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         {/* ── Pesquisa, filtro de área e período ── */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ flex: 2, minWidth: 220, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 10, padding: '9px 14px', boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-            <FiSearch style={{ color: '#9ca3af', flexShrink: 0 }} />
-            <input
-              placeholder="Pesquisar Consultor..."
-              value={filtro}
-              onChange={e => setFiltro(e.target.value)}
-              style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13 }}
-            />
+        <div className="row g-2 mb-3">
+          <div className="col-12 col-md-5">
+            <div className="input-group">
+              <span className="input-group-text"><FiSearch className="text-secondary" /></span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Pesquisar Consultor..."
+                value={filtro}
+                onChange={e => setFiltro(e.target.value)}
+              />
+            </div>
           </div>
-          <select value={filtroArea} onChange={e => setFiltroArea(e.target.value)} style={selectStyle}>
-            <option value="todas">Todas as áreas</option>
-            {areas.map((a, i) => <option key={i} value={a}>{a}</option>)}
-          </select>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', borderRadius: 10, padding: '0 12px', minWidth: 260, boxShadow: '0 5px 40px rgba(237,237,237,1)' }}>
-            <FiCalendar style={{ color: '#9ca3af', flexShrink: 0 }} />
-            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-              style={{ border: 'none', outline: 'none', fontSize: 12, padding: '10px 4px', color: '#555' }} />
-            <span style={{ color: '#aaa', fontSize: 12 }}>–</span>
-            <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)}
-              style={{ border: 'none', outline: 'none', fontSize: 12, padding: '10px 4px', color: '#555' }} />
+          <div className="col-6 col-md-3">
+            <select className="form-select" value={filtroArea} onChange={e => setFiltroArea(e.target.value)}>
+              <option value="todas">Todas as áreas</option>
+              {areas.map((a, i) => <option key={i} value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div className="col-12 col-md-4">
+            <div className="input-group">
+              <span className="input-group-text"><FiCalendar className="text-secondary" /></span>
+              <input type="date" className="form-control" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+              <span className="input-group-text">–</span>
+              <input type="date" className="form-control" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+            </div>
           </div>
         </div>
 
         {/* ── Tabela de consultores ── */}
-        <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          {loading ? (
-            <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar...</p>
-          ) : filtrados.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#aaa' }}>Nenhum consultor encontrado.</p>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    {['Consultor', 'Área', 'Service Line', 'Badges Obtidos', 'Badges Em Processo', 'Pontos Totais', 'Última Atividade', 'Ações'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrados.map((c) => (
-                    <tr key={c.idUtilizador} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                      <td style={{ padding: '10px 12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 30, height: 30, borderRadius: '50%', background: '#e8f0fb',
-                            color: '#39639C', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 700, flexShrink: 0,
-                          }}>
-                            {c.nome?.[0]?.toUpperCase() || '?'}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 500, color: '#333' }}>{c.nome}</div>
-                            <div style={{ fontSize: 11, color: '#aaa' }}>{c.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{c.nomeArea || '-'}</td>
-                      <td style={{ padding: '10px 12px', color: '#6b7280' }}>{c.nomeServiceLine || '-'}</td>
-                      <td style={{ padding: '10px 12px' }}>{c.totalBadges}</td>
-                      <td style={{ padding: '10px 12px' }}>{c.badgesEmProcesso}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 600, color: '#39639C' }}>{c.totalPontos}</td>
-                      <td style={{ padding: '10px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>{formatarData(c.ultimaAtividade)}</td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <FiEye
-                          title="Ver perfil"
-                          onClick={() => navigate(`/serviceline/consultores/${c.idUtilizador}`)}
-                          style={{ cursor: 'pointer', color: '#39639C', fontSize: 16 }}
-                        />
-                      </td>
+        <div className="card">
+          <div className="card-body">
+            {loading ? (
+              <p className="text-center text-secondary mb-0">A carregar...</p>
+            ) : filtrados.length === 0 ? (
+              <p className="text-center text-secondary mb-0">Nenhum consultor encontrado.</p>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Consultor</th>
+                      <th>Área</th>
+                      <th>Service Line</th>
+                      <th>Badges Obtidos</th>
+                      <th>Badges Em Processo</th>
+                      <th>Pontos Totais</th>
+                      <th>Última Atividade</th>
+                      <th>Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {filtrados.map((c) => (
+                      <tr key={c.idUtilizador}>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 fw-bold text-primary"
+                              style={{ width: 30, height: 30, background: '#e8f0fb', fontSize: 12 }}>
+                              {c.nome?.[0]?.toUpperCase() || '?'}
+                            </div>
+                            <div>
+                              <div className="fw-medium">{c.nome}</div>
+                              <div className="text-secondary small">{c.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-secondary">{c.nomeArea || '-'}</td>
+                        <td className="text-secondary">{c.nomeServiceLine || '-'}</td>
+                        <td>{c.totalBadges}</td>
+                        <td>{c.badgesEmProcesso}</td>
+                        <td className="fw-bold text-primary">{c.totalPontos}</td>
+                        <td className="text-secondary text-nowrap">{formatarData(c.ultimaAtividade)}</td>
+                        <td>
+                          <FiEye
+                            role="button"
+                            title="Ver perfil"
+                            onClick={() => navigate(`/serviceline/consultores/${c.idUtilizador}`)}
+                            className="text-primary"
+                            style={{ fontSize: 16 }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         <Footer />
@@ -226,5 +221,3 @@ export default function Consultores() {
     </LayoutSL>
   )
 }
-
-const selectStyle = { flex: 1, minWidth: 150, background: '#fff', border: 'none', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#374151', outline: 'none', cursor: 'pointer', boxShadow: '0 5px 40px rgba(237,237,237,1)' }
