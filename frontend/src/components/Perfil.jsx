@@ -29,7 +29,11 @@ const NAV_ITEMS = {
   ],
   talent_manager: [
     { label: 'Dashboard', path: '/talent/dashboard', icon: icons.dashboard },
+    { label: 'Badges', path: '/talent/badges', icon: icons.badges },
     { label: 'Validações', path: '/talent/validacoes', icon: icons.validacoes },
+    { label: 'Consultores', path: '/talent/consultores', icon: icons.utilizadores },
+    { label: 'Relatórios', path: '/talent/relatorios', icon: icons.relatorios },
+    { label: 'Gamification', path: '/talent/gamification', icon: icons.gamification },
   ],
   sl_leader: [
     { label: 'Dashboard', path: '/serviceline/dashboard', icon: icons.dashboard },
@@ -111,7 +115,7 @@ export default function Perfil() {
         <div className="row h-100">
 
           {/* Sidebar — esconde em ecrãs pequenos */}
-          <div className="col-auto d-none d-md-flex p-0">
+          <div className="col-auto d-flex p-0">
             <Sidebar navItems={navItems} perfil={perfilLabel} />
           </div>
 

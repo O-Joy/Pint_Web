@@ -37,10 +37,10 @@ import NotificacoesSL from './views/serviceline/Notificacoes'
 import DashboardTalent from './views/talentmanager/Dashboard'
 import ValidacoesTM from './views/talentmanager/Validacoes'
 import Badges from './views/talentmanager/Badges'
-//import Consultores from './views/talentmanager/Consultores'
-//import Relatorios from './views/talentmanager/Relatorios'
-//import Notificacoes from './views/talentmanager/Notificacoes'
-//import Gamification from './views/talentmanager/Gamification'
+import ConsultoresTM from './views/talentmanager/Consultores'
+import ConsultorDetalheTM from './views/talentmanager/ConsultorDetalhe'
+import RelatoriosTM from './views/talentmanager/Relatorios'
+import GamificationTM from './views/talentmanager/Gamification'
 
 //consultor
 import EscolhaArea from './views/auth/EscolhaArea'
@@ -111,27 +111,29 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/*
         <Route path="/talent/consultores" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Consultores />
+            <ConsultoresTM />
           </ProtectedRoute>
         } />
+
+        <Route path="/talent/consultores/:id" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <ConsultorDetalheTM />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/talent/relatorios" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Relatorios />
+            <RelatoriosTM />
           </ProtectedRoute>
         } />
-        <Route path="/talent/notificacoes" element={
-          <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Notificacoes />
-          </ProtectedRoute>
-        } />
+
         <Route path="/talent/gamification" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Gamification />
+            <GamificationTM />
           </ProtectedRoute>
-        } />*/}
+        } />
 
         {/* Rotas do Service Line Leader */}
         <Route path="/serviceline/dashboard" element={

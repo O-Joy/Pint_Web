@@ -1,200 +1,211 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import LayoutTM from './components/LayoutTM'
+import AcoesRapidas from '../../components/AcoesRapidas'
 import api from '../../services/api'
 import { MdPendingActions, MdPeopleAlt, MdVerified } from 'react-icons/md'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
+const CARDS_ACOES_RAPIDAS = [
+  {
+    descricao: 'Nesta página está presente',
+    items: ['Badges Disponíveis', 'Badges Especiais', 'Badges a Expirar'],
+    botao: 'Badges',
+    path: '/talent/badges',
+  },
+  {
+    descricao: 'Nesta página está presente',
+    items: ['Candidaturas Pendentes', 'Evidências Submetidas', 'Histórico das Validações', 'SLA do Perfil'],
+    botao: 'Validações',
+    path: '/talent/validacoes',
+  },
+  {
+    descricao: 'Nesta página está presente',
+    items: ['Lista Completa', 'Pontos Acumulados', 'Timeline Profissional'],
+    botao: 'Consultores',
+    path: '/talent/consultores',
+  },
+  {
+    descricao: 'Nesta página está presente',
+    items: ['Exportação de Dados', 'Desenvolver Relatório'],
+    botao: 'Relatórios',
+    path: '/talent/relatorios',
+  },
+]
 
+const CORES_MEDALHA = ['#ad9409', '#a9a9a9', '#965e25', '#1cd6d6']
 
 export default function DashboardTalent() {
+  const navigate = useNavigate()
+
   const [stats, setStats] = useState({ pendentes: 0, consultores: 0, validadas: 0, variacao: 0 })
   const [topConsultores, setTopConsultores] = useState([])
   const [consultores, setConsultores] = useState([])
   const [dadosGrafico, setDadosGrafico] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-  api.get('/tm/dashboard').then(res => setStats(res.data)).catch(() => {})
+    Promise.all([
+      api.get('/tm/dashboard'),
+      api.get('/tm/top-consultores'),
+      api.get('/tm/estatisticas-mensais'),
+    ])
+      .then(([resStats, resConsultores, resGrafico]) => {
+        setStats(resStats.data)
 
-  api.get('/tm/top-consultores').then(res => {
-    const dados = Array.isArray(res.data) ? res.data : []
-    setTopConsultores(dados.slice(0, 4).map(c => ({
-      nome: c.nome, badges: c.totalBadges, pontos: c.totalPontos,
-    })))
-    setConsultores(dados.slice(0, 4).map(c => ({
-      nome: c.nome,
-      progresso: c.totalBadges > 0 ? Math.min(c.totalBadges * 10, 100) : 10,
-    })))
-  }).catch(() => {})
+        const dados = Array.isArray(resConsultores.data) ? resConsultores.data : []
+        setTopConsultores(dados.slice(0, 4).map(c => ({
+          nome: c.nome, badges: c.totalBadges, pontos: c.totalPontos,
+        })))
+        setConsultores(dados.slice(0, 4).map(c => ({
+          nome: c.nome,
+          progresso: c.totalBadges > 0 ? Math.min(c.totalBadges * 10, 100) : 10,
+        })))
 
-  api.get('/tm/estatisticas-mensais').then(res => {
-    setDadosGrafico(Array.isArray(res.data) ? res.data : [])
-  }).catch(() => {})
-}, [])
+        setDadosGrafico(Array.isArray(resGrafico.data) ? resGrafico.data : [])
+      })
+      .catch((err) => console.error('[DashboardTalent]', err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const cartoesResumo = [
+    { icone: <MdPendingActions />, valor: stats.pendentes, label: 'Pedidos Pendentes', sub: `${stats.variacao >= 0 ? '+' : ''}${stats.variacao}% Este Mês` },
+    { icone: <MdPeopleAlt />, valor: stats.consultores, label: 'Consultores Ativos' },
+    { icone: <MdVerified />, valor: stats.validadas, label: 'Candidaturas Validadas' },
+  ]
 
   return (
     <LayoutTM>
-      <div style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div className="dashboard-wrapper">
 
-        <h2 style={{ color: '#39639C', fontWeight: 700, marginBottom: 20, textAlign: 'center', fontSize: 18 }}>
-          RESUMO DA MINHA SERVICE LINE
-        </h2>
+        <h2 className="dashboard-titulo">Resumo da minha Service Line</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
-          {[
-            { label: 'Pedidos Pendentes', valor: stats.pendentes, sub: `${stats.variacao >=0 ? '+' : ''}${stats.variacao}%\nEste Mês`, icon: <MdPendingActions style={{ color: '#39639C', fontSize: 22 }} /> },
-            { label: 'Consultores Ativos', valor: stats.consultores, icon: <MdPeopleAlt style={{ color: '#39639C', fontSize: 22 }} /> },
-            { label: 'Candidaturas Validadas', valor: stats.validadas, icon: <MdVerified style={{ color: '#39639C', fontSize: 22 }} /> },
-          ].map((c, i) => (
-            <div key={i} style={{ background: '#fff', borderRadius: 16, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#e8f0fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#39639C', flexShrink: 0 }}>
-                  {c.icon}
-                </div>
-                <div>
-                  <div style={{ fontSize: 30, fontWeight: 700, color: '#1a1a2e', lineHeight: 1 }}>{c.valor}</div>
-                  <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{c.label}</div>
-                </div>
-              </div>
-              {c.sub && (
-                <div style={{ textAlign: 'right', fontSize: 11, color: '#39639C', fontWeight: 600, lineHeight: 1.5 }}>
-                  {c.sub.split('\n').map((l, j) => <div key={j}>{l}</div>)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20, marginBottom: 24 }}>
-
-          <div>
-            <h4 style={{ color: '#39639C', fontWeight: 600, marginBottom: 20, fontSize: 15 }}>Progresso dos Consultores</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {consultores.map((c, i) => (
-                <div key={i} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#c8c8c8', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#333', marginBottom: 8 }}>{c.nome}</div>
-                    <div style={{ height: 15, background: '#e8e8e8', borderRadius: 10, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${c.progresso}%`, background: '#10b4db', borderRadius: 10 }} />
+        {loading ? (
+          <p className="dashboard-vazio">A carregar...</p>
+        ) : (
+          <>
+            {/* Cards de resumo */}
+            <div className="row g-3 dashboard-resumo">
+              {cartoesResumo.map((c, i) => (
+                <div key={i} className="col-12 col-sm-6 col-lg-4">
+                  <div className="dashboard-resumo-card">
+                    <span className="dashboard-resumo-icone">{c.icone}</span>
+                    <div style={{ flex: 1 }}>
+                      <div className="dashboard-resumo-valor">{c.valor}</div>
+                      <div className="dashboard-resumo-label">{c.label}</div>
                     </div>
+                    {c.sub && <div className="dashboard-resumo-sub">{c.sub}</div>}
                   </div>
                 </div>
               ))}
             </div>
-            <Link to="/talent/consultores" style={{ display: 'block', textAlign: 'center', marginTop: 16, color: '#39639C', fontSize: 13, textDecoration: 'underline' }}>
-              Ver Consultores
-            </Link>
-          </div>
 
-          <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <h4 style={{ color: '#39639C', fontWeight: 600, fontSize: 14, margin: '0 0 16px' }}>Pedidos de Badges - Mensal</h4>
-          <Bar
-            data={{
-              labels: dadosGrafico.map(d => d.mes),
-              datasets: [
-                {
-                  label: 'Aprovadas',
-                  data: dadosGrafico.map(d => d.aprovadas),
-                  backgroundColor: '#4a9fd4',
-                  borderRadius: 6,
-                  barThickness: 14,
-                },
-                {
-                  label: 'Rejeitadas',
-                  data: dadosGrafico.map(d => d.rejeitadas),
-                  backgroundColor: '#7eecd4',
-                  borderRadius: 6,
-                  barThickness: 14,
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8 } },
-                tooltip: { mode: 'index' },
-              },
-              scales: {
-                x: { grid: { display: false } },
-                y: { grid: { color: '#f0f0f0' }, border: { display: false } },
-              },
-            }}
-          />
-        </div>
-</div>
-          
+            {/* Progresso dos Consultores | Pedidos de Badges - Mensal */}
+            <div className="row g-3 dashboard-linha-meio">
 
+              <div className="col-12 col-lg-7">
+                <div className="dashboard-card h-100">
+                  <h3 className="dashboard-card-titulo">Progresso dos Consultores</h3>
+                  <div className="row g-3">
+                    {consultores.length ? consultores.map((c, i) => (
+                      <div key={i} className="col-12 col-sm-6">
+                        <div className="consultor-progresso-item">
+                          <div className="consultor-progresso-avatar" />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="consultor-progresso-nome">{c.nome}</p>
+                            <div className="consultor-progresso-barra">
+                              <div className="consultor-progresso-barra-fill" style={{ width: `${c.progresso}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <p className="dashboard-vazio">Sem consultores para mostrar.</p>
+                    )}
+                  </div>
+                  <button className="dashboard-verlink" onClick={() => navigate('/talent/consultores')}>
+                    Ver Consultores
+                  </button>
+                </div>
+              </div>
 
-        <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h4 style={{ color: '#39639C', fontWeight: 600, fontSize: 15, margin: 0 }}>Melhores Consultores - GAMIFICATION</h4>
-            <Link to="/talent/gamification" style={{ color: '#39639C', fontSize: 13, textDecoration: 'none' }}>Ver Todos</Link>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-            {topConsultores.map((c, i) => (
-              <div key={i} style={{ border: '1px solid #d0dff0', borderRadius: 14, padding: '16px 14px', background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#bdbdbd', flexShrink: 0 }} />
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', lineHeight: 1.3 }}>{c.nome}</div>
-                  {i < 4 && (
-                    <div style={{
-                      width: 24, height: 24, borderRadius: '50%', marginLeft: 'auto',
-                      background: i === 0 ? '#ad9409' : i === 1 ? '#a9a9a9' : i === 2 ? '#965e25' : '#1cd6d6',
-                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {i + 1}
+              <div className="col-12 col-lg-5">
+                <div className="dashboard-card h-100">
+                  <h3 className="dashboard-card-titulo">Pedidos de Badges - Mensal</h3>
+                  <div style={{ position: 'relative', height: 260 }}>
+                    <Bar
+                      data={{
+                        labels: dadosGrafico.map(d => d.mes),
+                        datasets: [
+                          { label: 'Aprovadas', data: dadosGrafico.map(d => d.aprovadas), backgroundColor: '#4a9fd4', borderRadius: 6, barThickness: 14 },
+                          { label: 'Rejeitadas', data: dadosGrafico.map(d => d.rejeitadas), backgroundColor: '#7eecd4', borderRadius: 6, barThickness: 14 },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8 } },
+                          tooltip: { mode: 'index' },
+                        },
+                        scales: {
+                          x: { grid: { display: false } },
+                          y: { grid: { color: '#f0f0f0' }, border: { display: false } },
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Melhores Consultores - GAMIFICATION */}
+            <div className="dashboard-secao">
+              <div className="dashboard-secao-cabecalho">
+                <h3 className="dashboard-card-titulo">Melhores Consultores - Gamification</h3>
+                <button className="dashboard-verlink" onClick={() => navigate('/talent/gamification')}>
+                  Ver Todos
+                </button>
+              </div>
+              <div className="row g-3">
+                {topConsultores.length ? topConsultores.map((c, i) => (
+                  <div key={i} className="col-6 col-lg-3">
+                    <div className="top-consultor-card">
+                      <div className="top-consultor-cabecalho">
+                        <div className="top-consultor-avatar" />
+                        <p className="top-consultor-nome">{c.nome}</p>
+                        <div className="top-consultor-medalha" style={{ background: CORES_MEDALHA[i] }}>
+                          {i + 1}
+                        </div>
+                      </div>
+                      <div className="top-consultor-stats">
+                        <div>
+                          <div className="top-consultor-stat-valor">{c.badges}</div>
+                          <div className="top-consultor-stat-label">BADGES</div>
+                        </div>
+                        <div>
+                          <div className="top-consultor-stat-valor" style={{ color: 'var(--cor-primaria)' }}>{c.pontos}</div>
+                          <div className="top-consultor-stat-label">PONTOS</div>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 16, justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#11a9d6', lineHeight: 1 }}>{c.badges}</div>
-                    <div style={{ fontSize: 10, color: '#39639C', fontWeight: 600 }}>BADGES</div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: '#39639C', lineHeight: 1 }}>{c.pontos}</div>
-                    <div style={{ fontSize: 10, color: '#6b7280' }}>PONTOS</div>
-                  </div>
-                </div>
+                )) : (
+                  <p className="dashboard-vazio">Sem consultores para mostrar.</p>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        <div style={{ background: '#fff', borderRadius: 14, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-          <h4 style={{ color: '#39639C', fontWeight: 600, fontSize: 15, marginBottom: 16, textAlign: 'center' }}>Ações Rápidas</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-            {[
-              { label: 'Badges', path: '/talent/badges', itens: ['Badges Disponíveis', 'Badges Especiais', 'Badges a Expirar'] },
-              { label: 'Validações', path: '/talent/validacoes', itens: ['Candidaturas Pendentes', 'Evidências Submetidas', 'Histórico das Validações', 'SLA do Perfil'] },
-              { label: 'Consultores', path: '/talent/consultores', itens: ['Lista Completa', 'Pontos Acumulados', 'Timeline Profissional'] },
-              { label: 'Relatórios', path: '/talent/relatorios', itens: ['Exportação de Dados', 'Desenvolver Relatório'] },
-            ].map((a, i) => (
-              <div key={i} style={{ background: '#f9f9f9', borderRadius: 10, padding: '16px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 200 }}>
-                <div>
-                  <p style={{ fontWeight: 600, fontSize: 12, color: '#333', marginBottom: 10 }}>Nesta página está presente</p>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px', color: '#888', fontSize: 11, lineHeight: 1.9 }}>
-                    {a.itens.map((item, j) => <li key={j}>- {item}</li>)}
-                  </ul>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <Link to={a.path} style={{ display: 'inline-block', background: '#39639C', color: '#fff', borderRadius: 8, padding: '8px 18px', textDecoration: 'none', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    {a.label}
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            {/* Ações Rápidas — componente partilhado */}
+            <AcoesRapidas cards={CARDS_ACOES_RAPIDAS} />
+          </>
+        )}
 
         <div style={{ textAlign: 'right', marginTop: 12, fontSize: 11, color: '#aaa' }}>
           Política de Privacidade e RGPD
         </div>
-
       </div>
     </LayoutTM>
   )
