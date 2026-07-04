@@ -24,6 +24,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background: var(--cor-fundo);
   color: var(--cor-texto);
+  overflow-x: hidden;
 }
 
 /* ── Layout de autenticação ── */
@@ -261,6 +262,7 @@ body {
   min-height: calc(100vh - 110px);
   padding: 1.5rem;
   margin-left: 200px;
+  overflow-x: auto;
 }
 /*=====================================================
 LOGO
@@ -1124,4 +1126,130 @@ barras
   .pg-content {
     margin-left: 200px;
   }
+}
+
+
+/*DASHBOARD TALENT MANAGER*/
+
+.dashboard-resumo-sub {
+  text-align: right;
+  font-size: 0.68rem;
+  color: var(--cor-primaria);
+  font-weight: 600;
+  line-height: 1.5;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.consultor-progresso-item {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.consultor-progresso-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #c8c8c8;
+  flex-shrink: 0;
+}
+
+.consultor-progresso-nome {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.consultor-progresso-barra {
+  height: 10px;
+  background: #e8e8e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.consultor-progresso-barra-fill {
+  height: 100%;
+  background: #10b4db;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.top-consultor-card {
+  border: 1px solid #d0dff0;
+  border-radius: 14px;
+  padding: 16px 14px;
+  background: #fff;
+  height: 100%;
+  min-width: 0;
+}
+
+.top-consultor-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.top-consultor-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #bdbdbd;
+  flex-shrink: 0;
+}
+
+.top-consultor-nome {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-consultor-medalha {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-left: auto;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.top-consultor-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.top-consultor-stat-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #11a9d6;
+  line-height: 1;
+}
+
+.top-consultor-stat-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+  margin-top: 2px;
 }
