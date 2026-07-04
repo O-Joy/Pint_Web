@@ -43,25 +43,48 @@ exports.getUtilizadores = async (req, res) => {
   try {
     const utilizadores = await Utilizador.findAll({
       order: [['nomeUtilizador', 'ASC']],
-    });
+    })
 
-    const resultado = await Promise.all(utilizadores.map(async (u) => ({
-      id: u.idUtilizador,
-      nome: u.nomeUtilizador,
-      email: u.email,
-      ativo: u.ativo === 1,
-      dataCriacao: u.dataCriacao,
-      ultimoLogin: u.ultimoLogin,
-      urlFoto: u.urlFoto,
-      perfil: await getPerfil(u.idUtilizador),
-    })));
+    const resultado = await Promise.all(utilizadores.map(async (u) => {
+      const perfil = await getPerfil(u.idUtilizador)
+      
+      // Vai buscar idArea e idServiceLine consoante o perfil
+      let idArea = null
+      let idServiceLine = null
 
-    return res.json(resultado);
+      if (perfil === 'consultor') {
+        const c = await Consultor.findOne({ where: { idUtilizador: u.idUtilizador } })
+        idArea = c?.idArea || null
+      } else if (perfil === 'talent_manager') {
+        const tm = await TalentManager.findOne({ where: { idUtilizador: u.idUtilizador } })
+        idArea = tm?.idArea || null
+        idServiceLine = tm?.idServiceLine || null
+      } else if (perfil === 'sl_leader') {
+        const sll = await SlLeader.findOne({ where: { idUtilizador: u.idUtilizador } })
+        idServiceLine = sll?.idServiceLine || null
+      }
+
+      return {
+        id: u.idUtilizador,
+        nome: u.nomeUtilizador,
+        email: u.email,
+        telefone: u.telefone,
+        ativo: u.ativo === 1,
+        dataCriacao: u.dataCriacao,
+        ultimoLogin: u.ultimoLogin,
+        urlFoto: u.urlFoto,
+        perfil,
+        idArea,
+        idServiceLine,
+      }
+    }))
+
+    return res.json(resultado)
   } catch (err) {
-    console.error('[admin] getUtilizadores:', err.message);
-    return res.status(500).json({ error: 'Erro ao listar utilizadores.' });
+    console.error('[admin] getUtilizadores:', err.message)
+    return res.status(500).json({ error: 'Erro ao listar utilizadores.' })
   }
-};
+}
 
 // Detalhes de um utilizador específico
 exports.getUtilizadorById = async (req, res) => {
@@ -1184,5 +1207,33 @@ exports.exportarCandidaturas = async (req, res) => {
   } catch (err) {
     console.error('[admin] exportarCandidaturas:', err.message);
     return res.status(500).json({ error: 'Erro ao exportar candidaturas.' });
+  }
+};
+
+exports.getConsultoresSemestre = async (req, res) => {
+  try {
+    const { Sequelize } = require('sequelize')
+    const seis = new Date()
+    seis.setMonth(seis.getMonth() - 6)
+
+    const dados = await Utilizador.findAll({
+      attributes: [
+        [Sequelize.fn('DATE_TRUNC', 'month', Sequelize.col('data_criacao')), 'mes'],
+        [Sequelize.fn('COUNT', Sequelize.col('id_utilizador')), 'total'],
+      ],
+      where: { dataCriacao: { [Op.gte]: seis } },
+      include: [{ model: Consultor, required: true, attributes: [] }],
+      group: [Sequelize.fn('DATE_TRUNC', 'month', Sequelize.col('data_criacao'))],
+      order: [[Sequelize.fn('DATE_TRUNC', 'month', Sequelize.col('data_criacao')), 'ASC']],
+      raw: true,
+    })
+
+    return res.json(dados.map(d => ({
+      mes: new Date(d.mes).toLocaleDateString('pt-PT', { month: '2-digit', day: '2-digit' }),
+      total: parseInt(d.total),
+    })))
+  } catch (err) {
+    console.error('[admin] getConsultoresSemestre:', err.message)
+    return res.status(500).json({ error: 'Erro.' })
   }
 };
