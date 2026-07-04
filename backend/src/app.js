@@ -59,7 +59,7 @@ app.use('/api', talentManagerRoutes);
 app.use('/api', dashboardConsultorRoutes);
 app.use('/api', objetivosRoutes);
 app.use('/api/sl', servicelineRoutes);
-app.use('/api', adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api', configuracaoRoutes);
 
 
