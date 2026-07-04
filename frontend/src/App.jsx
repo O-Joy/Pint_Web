@@ -18,6 +18,10 @@ import RedefinirPassword from './views/auth/RedefinirPassword'
 
 //Admin
 import DashboardAdmin from './views/admin/Dashboard'
+import AdminUtilizadores from './views/admin/Utilizadores'
+import AdminLearningPaths from './views/admin/LearningPaths'
+import AdminBadges from './views/admin/Badges'
+import AdminCandidaturas from './views/admin/Candidaturas'
 
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
@@ -175,6 +179,26 @@ function App() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute perfisPermitidos={['administrador']}>
             <DashboardAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/utilizadores" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminUtilizadores />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/learning-paths" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminLearningPaths />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/badges" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminBadges />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/candidaturas" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminCandidaturas />
           </ProtectedRoute>
         } />
 
