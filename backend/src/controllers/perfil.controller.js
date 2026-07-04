@@ -149,6 +149,34 @@ exports.getMeuPerfil = async (req, res) => {
         }
       }
       base.idArea = tm?.idArea ?? null;
+      const { Op } = require('sequelize');
+      const HistoricoCandidatura = require('../model/historicoCandidatura');
+      const Sla = require('../model/sla');
+      const BadgeRegular = require('../model/badgeRegular');
+
+      const candidaturasValidadas = await HistoricoCandidatura.count({
+        where: { idResponsavel: idUtilizador, idEstadoAtual: { [Op.in]: [3, 5] } },
+      });
+
+      const slasTM = await Sla.findAll({ where: { tipoPerfil: 'talent_manager' } });
+      const slaMedio = slasTM.length > 0
+        ? Math.round(slasTM.reduce((acc, s) => acc + s.horasMaxAcao, 0) / slasTM.length)
+        : 0;
+
+      const whereBadges = tm?.idArea ? { idArea: tm.idArea } : {};
+      const badgesDisponiveis = await BadgeRegular.count({ where: whereBadges });
+      const badgesArea = await BadgeRegular.findAll({ where: whereBadges, limit: 10 });
+
+      base.candidaturasValidadas = candidaturasValidadas;
+      base.relatoriosExportados = 0; // sem tabela de tracking de exportações ainda
+      base.slaMedio = slaMedio;
+      base.badgesDisponiveis = badgesDisponiveis;
+      base.badgesAssinatura = badgesArea.map(b => ({
+        id: b.idBadgeRegular,
+        nome: b.nomeBadge,
+        estado: 'Válido',
+        slaMeses: b.validadeDias ? Math.round(b.validadeDias / 30) : null,
+      }));
     }
 
     if (perfil === 'sl_leader') {

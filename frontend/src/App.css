@@ -1253,3 +1253,16 @@ barras
   color: var(--cor-primaria);
   margin-top: 2px;
 }
+
+.perfil-stat-card-tm {
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 240px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}

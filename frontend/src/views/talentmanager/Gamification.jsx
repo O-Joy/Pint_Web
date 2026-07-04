@@ -100,7 +100,7 @@ export default function Gamification() {
       <div style={{ fontFamily: 'Poppins, sans-serif', color: '#333' }}>
 
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="fw-bold mb-0 text-primary text-uppercase" style={{ fontSize: 22 }}>Gamification</h2>
+          <h2 style={{ color: '#39639C', fontWeight: 700, margin: 0 }}>Gamification</h2>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={exportarExcel} style={btnStyle}><FiDownload /> Exportar Excel</button>
             <button onClick={exportarPDF} style={btnStyle}><FiDownload /> Exportar PDF</button>

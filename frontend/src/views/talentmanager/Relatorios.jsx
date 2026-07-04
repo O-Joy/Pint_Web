@@ -185,7 +185,7 @@ export default function RelatoriosTM() {
 
   return (
     <LayoutTM>
-      <div style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <div style={{ fontFamily: 'Poppins, sans-serif', color: '#333' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <h2 style={{ color: '#39639C', fontWeight: 700, margin: 0 }}>Relatórios</h2>
