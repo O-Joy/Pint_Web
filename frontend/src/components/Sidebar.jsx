@@ -90,7 +90,6 @@ export default function Sidebar({ navItems, perfil }) {
       {/* Rodapé — fixo na parte inferior */}
       <div style={{
         padding: '1rem 0.75rem',
-        borderTop: '1px solid #d1d5db',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
