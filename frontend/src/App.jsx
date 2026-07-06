@@ -49,6 +49,7 @@ import BadgesConsultor from './views/consultor/Badges'
 import ObjetivosConsultor from './views/consultor/Objetivos'
 import GamificationConsultor from './views/consultor/Gamification'
 import PedidosConsultor from './views/consultor/Pedidos'
+import NotificacoesConsultor from './views/consultor/Notificacoes'
 
 
 
@@ -91,6 +92,12 @@ function App() {
           <ProtectedRoute perfisPermitidos={['consultor']}>
             <PedidosConsultor />
           </ProtectedRoute>
+        } />
+
+        <Route path="/consultor/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['consultor']}>
+            <NotificacoesConsultor />
+        </ProtectedRoute>
         } />
 
         {/* Rotas do Talent Manager — só perfil 'talent_manager' tem acesso */}

@@ -62,6 +62,13 @@ export default function NotificacoesConteudo() {
     api.put(`/notificacoes/${id}/lida`).catch(() => carregar())
   }
 
+  function eliminarNotificacao(id) {
+    if (!window.confirm('Eliminar esta notificação? Esta ação não pode ser desfeita.')) return
+    setNotificacoes(prev => prev.filter(n => n.id !== id))
+    setSelecionada(prev => prev && prev.id === id ? null : prev)
+    api.delete(`/notificacoes/${id}`).catch(() => carregar())
+  }
+
   function marcarNaoLida(id) {
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: false } : n))
     setSelecionada(prev => prev && prev.id === id ? { ...prev, lida: false } : prev)
@@ -185,7 +192,7 @@ export default function NotificacoesConteudo() {
         </div>
       )}
 
-      {/* ── Modal de detalhe ── */}
+    {/* ── Modal de detalhe ── */}
       {selecionada && (
         <div
           onClick={() => setSelecionada(null)}
@@ -219,15 +226,20 @@ export default function NotificacoesConteudo() {
               {new Date(selecionada.data).toLocaleString('pt-PT')}
             </p>
 
-            <div className="d-flex justify-content-end gap-2">
-              {selecionada.lida && (
-                <button onClick={() => marcarNaoLida(selecionada.id)} className="btn btn-outline-primary btn-sm">
-                  Marcar como não lida
-                </button>
-              )}
-              <button onClick={() => setSelecionada(null)} className="btn btn-primary btn-sm">
-                Fechar
+            <div className="d-flex justify-content-between gap-2">
+              <button onClick={() => eliminarNotificacao(selecionada.id)} className="btn btn-outline-danger btn-sm">
+                Eliminar
               </button>
+              <div className="d-flex gap-2">
+                {selecionada.lida && (
+                  <button onClick={() => marcarNaoLida(selecionada.id)} className="btn btn-outline-primary btn-sm">
+                    Marcar como não lida
+                  </button>
+                )}
+                <button onClick={() => setSelecionada(null)} className="btn btn-primary btn-sm">
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>
         </div>
