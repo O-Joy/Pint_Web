@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Topbar from '../../components/Topbar'
-import Sidebar, { icons } from '../../components/Sidebar'
+import LayoutConsultor from './components/LayoutConsultor'
 import api from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa'
@@ -11,14 +10,6 @@ function urlFotoCompleto(urlFoto) {
   if (!urlFoto) return null
   return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
 }
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
-  { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
-  { label: 'Pedidos', path: '/consultor/pedidos', icon: icons.pedidos },
-  { label: 'Objetivos', path: '/consultor/objetivos', icon: icons.objetivos },
-  { label: 'Gamification', path: '/consultor/gamification', icon: icons.gamification },
-]
 
 function Evolucao({ valor }) {
   if (valor === null || valor === undefined) {
@@ -60,19 +51,8 @@ export default function GamificationConsultor() {
   ]
 
   return (
-    <div className="pg-layout">
-      <div className="pg-top"><Topbar /></div>
-
-      <div className="container-fluid pg-body">
-        <div className="row h-100">
-          <div className="col-auto d-none d-md-flex p-0">
-            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-          </div>
-
-          <div className="col">
-            <main className="pg-content">
-              <div className="p-4">
-
+<LayoutConsultor>
+      <div className="p-4">
                 {loading ? (
                   <p className="text-center text-muted">A carregar...</p>
                 ) : (
@@ -177,12 +157,7 @@ export default function GamificationConsultor() {
                     )}
                   </div>
                 )}
-
               </div>
-            </main>
-          </div>
-        </div>
-      </div>
-    </div>
+    </LayoutConsultor>
   )
 }

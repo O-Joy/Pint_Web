@@ -1,17 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Modal } from 'bootstrap'
-import Topbar from '../../components/Topbar'
-import Sidebar, { icons } from '../../components/Sidebar'
+import LayoutConsultor from './components/LayoutConsultor'
 import api from '../../services/api'
 import { FaLayerGroup, FaSitemap, FaRoute, FaCrown, FaTrophy } from 'react-icons/fa'
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
-  { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
-  { label: 'Pedidos', path: '/consultor/pedidos', icon: icons.pedidos },
-  { label: 'Objetivos', path: '/consultor/objetivos', icon: icons.objetivos },
-  { label: 'Gamification', path: '/consultor/gamification', icon: icons.gamification },
-]
 
 // Ícone + cor por tipo de objetivo — IDs fixos da tabela tipo_objetivo
 const VISUAL_POR_TIPO = {
@@ -157,18 +148,8 @@ export default function ObjetivosConsultor() {
   }
 
   return (
-    <div className="pg-layout">
-      <div className="pg-top"><Topbar /></div>
-
-      <div className="container-fluid pg-body">
-        <div className="row h-100">
-          <div className="col-auto d-none d-md-flex p-0">
-            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-          </div>
-
-          <div className="col">
-            <main className="pg-content">
-              <div className="p-4">
+    <LayoutConsultor>
+      <div className="p-4">
 
                 <h2 className="text-center fw-bold mb-4" style={{ color: '#39639C' }}>Crie um novo objetivo</h2>
 
@@ -307,10 +288,6 @@ export default function ObjetivosConsultor() {
                 )}
 
               </div>
-            </main>
-          </div>
-        </div>
-      </div>
 
       {/* Modal — Criar objetivo */}
       <div className="modal fade" ref={modalCriarRef} tabIndex="-1">
@@ -406,6 +383,6 @@ export default function ObjetivosConsultor() {
           </div>
         </div>
       </div>
-    </div>
+    </LayoutConsultor>
   )
 }

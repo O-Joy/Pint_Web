@@ -1,17 +1,8 @@
 import { useState, useEffect } from 'react'
-import Topbar from '../../components/Topbar'
-import Sidebar, { icons } from '../../components/Sidebar'
+import LayoutConsultor from './components/LayoutConsultor'
 import api from '../../services/api'
 import { FiSearch, FiUploadCloud } from 'react-icons/fi'
 import { FaCheckCircle } from 'react-icons/fa'
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
-  { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
-  { label: 'Pedidos', path: '/consultor/pedidos', icon: icons.pedidos },
-  { label: 'Objetivos', path: '/consultor/objetivos', icon: icons.objetivos },
-  { label: 'Gamification', path: '/consultor/gamification', icon: icons.gamification },
-]
 
 const POR_PAGINA = 6
 const ESTADOS_PENDENTES = [1, 2, 3, 4]
@@ -223,18 +214,8 @@ export default function PedidosConsultor() {
   }
 
   return (
-    <div className="pg-layout">
-      <div className="pg-top"><Topbar /></div>
-
-      <div className="container-fluid pg-body">
-        <div className="row h-100">
-          <div className="col-auto d-none d-md-flex p-0">
-            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-          </div>
-
-          <div className="col">
-            <main className="pg-content">
-              <div style={{ padding: '1.5rem', fontFamily: 'Poppins, sans-serif' }}>
+    <LayoutConsultor>
+      <div style={{ padding: '1.5rem', fontFamily: 'Poppins, sans-serif' }}>
 
                 {loading ? (
                   <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar...</p>
@@ -370,10 +351,6 @@ export default function PedidosConsultor() {
                   </>
                 )}
               </div>
-            </main>
-          </div>
-        </div>
-      </div>
 
       {/* Modal — Detalhes */}
       {candidaturaDetalhe && (
@@ -523,7 +500,7 @@ export default function PedidosConsultor() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutConsultor>
   )
 }
 
