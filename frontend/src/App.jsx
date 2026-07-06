@@ -41,6 +41,7 @@ import ConsultoresTM from './views/talentmanager/Consultores'
 import ConsultorDetalheTM from './views/talentmanager/ConsultorDetalhe'
 import RelatoriosTM from './views/talentmanager/Relatorios'
 import GamificationTM from './views/talentmanager/Gamification'
+import NotificacoesTM from './views/talentmanager/Notificacoes'
 
 //consultor
 import EscolhaArea from './views/auth/EscolhaArea'
@@ -139,6 +140,12 @@ function App() {
         <Route path="/talent/gamification" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
             <GamificationTM />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/talent/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <NotificacoesTM />
           </ProtectedRoute>
         } />
 
