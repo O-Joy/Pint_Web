@@ -3,19 +3,14 @@
 //
 // ESTADOS (tabela estados_candidatura):
 //   1 - Em Validação TM
-//   2 - Em Retificação TM   ← consultor tem de agir
+//   2 - Em Retificação TM
 //   3 - Em Validação SLL
-//   4 - Em Retificação SLL  ← consultor tem de agir
+//   4 - Em Retificação SLL
 //   5 - Aprovada
 //   6 - Rejeitada
-//
-// FLUXO:
-//   Consultor cria candidatura (estado 0/rascunho interno → submetida → estado 1)
-//   TM valida → aprova (→3) ou pede retificação (→2)
-//   Consultor corrige → ressubmete (→3)
-//   SLL valida → aprova (→5) ou pede retificação (→4)
-//   Consultor corrige → ressubmete (→3)
+
 const { Op } = require('sequelize');
+const sequelize         = require('../config/database');
 const Candidatura       = require('../model/candidatura');
 const HistoricoCandidatura = require('../model/historicoCandidatura');
 const EstadosCandidatura   = require('../model/estadosCandidatura');
@@ -26,12 +21,6 @@ const Nivel             = require('../model/nivel');
 const Area              = require('../model/area');
 const path              = require('path');
 const fs                = require('fs');
-
-// Estados que indicam que o TM/SLL devolveu a candidatura — o consultor
-// tem de corrigir e reenviar
-const ESTADOS_RETIFICACAO = [2, 4];
-// Estados finais (já não estão em curso)
-const ESTADOS_FINAIS = [5, 6];
 
 // ─────────────────────────────────────────────────────────────
 // HELPER: monta o nome do estado a partir do id
@@ -79,7 +68,7 @@ exports.getCandidaturas = async (req, res) => {
     const resultado = await Promise.all(candidaturas.map(async (c) => {
       const nomeEstado = await getNomeEstado(c.idEstadoAtual);
 
-      // Vai buscar o nome do badge, nível e área via JOIN manual (sem associações Sequelize)
+      // Vai buscar o nome do badge, nível, área, pontos e imagem via JOIN manual (sem associações Sequelize)
       let nomeBadge = 'Desconhecido';
       let nomeNivel = null;
       let nomeArea = null;
@@ -100,16 +89,21 @@ exports.getCandidaturas = async (req, res) => {
         }
       }
 
+      // Número de requisitos do badge (coluna "Requisitos")
       const numRequisitos = await Requisitos.count({ where: { idBadgeRegular: c.idBadgeRegular } });
 
-      // Data de decisão — a data do último registo de histórico com estado final (Aprovada/Rejeitada)
+      // Ação necessária: estados 2 e 4 = "Em Retificação" → o consultor tem de agir
+      const acaoNecessaria = [2, 4].includes(c.idEstadoAtual);
+
+      // Data da decisão final (só faz sentido para estados 5/6 - Aprovada/Rejeitada),
+      // vem do último registo do histórico com esse estado
       let dataDecisao = null;
-      if (ESTADOS_FINAIS.includes(c.idEstadoAtual)) {
+      if ([5, 6].includes(c.idEstadoAtual)) {
         const ultimoHistorico = await HistoricoCandidatura.findOne({
           where: { numCandidatura: c.numCandidatura, idEstadoAtual: c.idEstadoAtual },
           order: [['dataAlteracao', 'DESC']],
         });
-        dataDecisao = ultimoHistorico?.dataAlteracao ?? null;
+        if (ultimoHistorico) dataDecisao = ultimoHistorico.dataAlteracao;
       }
 
       return {
@@ -122,11 +116,11 @@ exports.getCandidaturas = async (req, res) => {
         nomeBadge,
         nomeNivel,
         nomeArea,
-        pontos,
-        urlImage,
-        numRequisitos,
         nomeEstadoAtual: nomeEstado,
-        acaoNecessaria: ESTADOS_RETIFICACAO.includes(c.idEstadoAtual),
+        numRequisitos,
+        acaoNecessaria,
+        pontos,
+        urlImagem,
       };
     }));
 
@@ -159,34 +153,16 @@ exports.getDetalhesCandidatura = async (req, res) => {
       order: [['dataAlteracao', 'ASC']],
     });
 
-    const Utilizador = require('../model/utilizador');
-    const SIGLA_RESPONSAVEL = { talent_manager: 'TM', sl_leader: 'SLL' };
-
-    let estadoAnteriorNome = null; // vai andando à medida que percorremos por ordem cronológica
-    const historicoFormatado = [];
-    for (const h of historico) {
-      let nomeResponsavel = null;
-      if (h.idResponsavel) {
-        const resp = await Utilizador.findOne({ where: { idUtilizador: h.idResponsavel } });
-        const sigla = SIGLA_RESPONSAVEL[h.tipoResponsavel] || '';
-        nomeResponsavel = resp ? `${resp.nomeUtilizador}${sigla ? ' - ' + sigla : ''}` : null;
-      }
-
-      historicoFormatado.push({
-        idTransacao: h.idTransacao,
-        numCandidatura: h.numCandidatura,
-        idResponsavel: h.idResponsavel,
-        nomeResponsavel,
-        tipoResponsavel: h.tipoResponsavel,
-        dataAlteracao: h.dataAlteracao,
-        idEstadoAtual: h.idEstadoAtual,
-        nomeEstadoAtual: await getNomeEstado(h.idEstadoAtual),
-        estadoAnterior: estadoAnteriorNome,
-        comentario: h.comentario,
-      });
-
-      estadoAnteriorNome = await getNomeEstado(h.idEstadoAtual);
-    }
+    const historicoFormatado = await Promise.all(historico.map(async (h) => ({
+      idTransacao: h.idTransacao,
+      numCandidatura: h.numCandidatura,
+      idResponsavel: h.idResponsavel,
+      tipoResponsavel: h.tipoResponsavel,
+      dataAlteracao: h.dataAlteracao,
+      idEstadoAtual: h.idEstadoAtual,
+      nomeEstadoAtual: await getNomeEstado(h.idEstadoAtual),
+      comentario: h.comentario,
+    })));
 
     // Evidências submetidas
     const evidencias = await Evidencia.findAll({
@@ -202,7 +178,7 @@ exports.getDetalhesCandidatura = async (req, res) => {
       estado: e.estado,
     }));
 
-    return res.json({ historico: historicoFormatado.reverse(), evidencias: evidenciasFormatadas });
+    return res.json({ historico: historicoFormatado, evidencias: evidenciasFormatadas });
   } catch (err) {
     console.error('[candidaturas] getDetalhesCandidatura:', err.message);
     return res.status(500).json({ error: 'Erro interno ao obter detalhes.' });
@@ -375,21 +351,24 @@ exports.submeterCandidatura = async (req, res) => {
     }
 
     // Determina o próximo estado:
-    // Se vem de retificação SLL (4) → volta ao SLL (3)
-    // Caso contrário → TM (1)
+    // Se vem de retificação SLL (4) -> volta ao SLL (3)
+    // Caso contrário -> TM (1)
     const novoEstado = candidatura.idEstadoAtual === 4 ? 3 : 1;
 
-    // Actualiza o estado da candidatura
-    await candidatura.update({ idEstadoAtual: novoEstado });
+    // Actualiza o estado e regista no histórico dentro da MESMA transação:
+    // ou os dois passos têm sucesso, ou nenhum fica gravado — evita candidaturas
+    // com id_estado_atual atualizado mas sem a entrada correspondente no histórico.
+    await sequelize.transaction(async (t) => {
+      await candidatura.update({ idEstadoAtual: novoEstado }, { transaction: t });
 
-    // Regista no histórico
-    await HistoricoCandidatura.create({
-      numCandidatura,
-      idResponsavel: null,   // null = acção do próprio consultor
-      tipoResponsavel: null,
-      dataAlteracao: new Date(),
-      idEstadoAtual: novoEstado,
-      comentario: 'Candidatura submetida pelo consultor.',
+      await HistoricoCandidatura.create({
+        numCandidatura,
+        idResponsavel: null,   // null = acção do próprio consultor
+        tipoResponsavel: null,
+        dataAlteracao: new Date(),
+        idEstadoAtual: novoEstado,
+        comentario: 'Candidatura submetida pelo consultor.',
+      }, { transaction: t });
     });
 
     return res.json({ message: 'Candidatura submetida com sucesso.', estado: novoEstado });
