@@ -1,4 +1,3 @@
-// src/views/public/Home.jsx
 import { useState, useEffect } from 'react'
 import PublicLayout from '../../components/PublicLayout'
 import CardBadgePublico from '../../components/CardBadgePublico'
@@ -93,15 +92,11 @@ export default function PublicHome() {
         )}
       </div>
 
-      {/* ── Modal de informação rápida de um destaque ── */}
+      {/* Modal de informação rápida de um destaque */}
       {selecionado && (
-        <div
-          onClick={() => setSelecionado(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-        >
-          <div onClick={e => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 420, position: 'relative' }}>
-            <div className="card-body">
-              <button onClick={() => setSelecionado(null)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 20, color: '#9ca3af', cursor: 'pointer' }}>×</button>
+        <div className="modal-overlay" onClick={() => setSelecionado(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <button onClick={() => setSelecionado(null)} className="modal-close-btn">×</button>
               <div className="d-flex align-items-center gap-3 mb-3">
                 <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: 48, height: 48, background: '#eef3fa', fontSize: 22 }}>🏅</div>
                 <div>
@@ -115,7 +110,6 @@ export default function PublicHome() {
               </p>
               <p className="small text-primary fw-medium mt-1">{selecionado.totalConsultores} consultores certificados</p>
               <Link to="/explorar" className="btn btn-primary btn-sm w-100 mt-2">Ver no catálogo</Link>
-            </div>
           </div>
         </div>
       )}

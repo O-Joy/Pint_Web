@@ -1,9 +1,3 @@
-// src/views/serviceline/Validacoes.jsx
-// Página de Validações do Service Line Leader.
-// Lista candidaturas "Em Validação SLL" (estado 3) da sua Service Line.
-// Permite: ver detalhe (histórico + evidências + requisitos), Validar, Rejeitar e Devolver.
-// Inclui filtros (pesquisa/nível/tabs), exportação Excel/PDF, modais de confirmação e toasts.
-
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
@@ -13,6 +7,7 @@ import { FaReply, FaPaperPlane } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { desenharLogoSoftinsa } from '../../utils/pdfLogo'
 
 export default function Validacoes() {
   // ── Estado da lista ──
@@ -146,12 +141,13 @@ export default function Validacoes() {
     XLSX.writeFile(wb, 'validacoes.xlsx')
   }
 
-  function exportarPDF() {
+  async function exportarPDF() {
     const doc = new jsPDF()
+    const y = await desenharLogoSoftinsa(doc)
     doc.setFontSize(14)
-    doc.text('Validações - Service Line', 14, 16)
+    doc.text('Validações - Service Line', 14, y)
     autoTable(doc, {
-      startY: 22,
+      startY: y + 6,
       head: [['ID', 'Consultor', 'Badge', 'Nível', 'Data', 'Estado']],
       body: filtradas.map(c => [
         c.numCandidatura, c.nomeConsultor, c.nomeBadge, c.nomeNivel,
@@ -279,8 +275,8 @@ export default function Validacoes() {
 
       {selecionada && !confirmacao && (
         <Overlay onClose={fecharDetalhe}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 560, maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={fecharDetalhe} style={fecharBtn}>×</button>
+          <div className="modal-box" style={{ maxWidth: 560 }}>
+            <button onClick={fecharDetalhe} className="modal-close-btn">×</button>
             <h3 style={{ color: '#1a1a2e', fontWeight: 700, fontSize: 18, margin: '0 0 18px' }}>
               Nº Candidatura: {selecionada.numCandidatura}
             </h3>
@@ -334,30 +330,39 @@ export default function Validacoes() {
               </div>
             )}
 
-            {/* Feedback */}
-            <p style={subTitulo}>Feedback:</p>
-            <textarea
-              value={comentario}
-              onChange={e => setComentario(e.target.value)}
-              placeholder="Adicione um comentário..."
-              className="form-control mb-3"
-              style={{ minHeight: 70, resize: 'vertical', boxShadow: 'none', border: '1px solid #d1d5db' }}
-            />
+            {(selecionada.idEstadoAtual === 3 || selecionada.idEstadoAtual === 4) ? (
+              <>
+                {/* Feedback */}
+                <p style={subTitulo}>Feedback:</p>
+                <textarea
+                  value={comentario}
+                  onChange={e => setComentario(e.target.value)}
+                  placeholder="Adicione um comentário..."
+                  className="form-control mb-3"
+                  style={{ minHeight: 70, resize: 'vertical', boxShadow: 'none', border: '1px solid #d1d5db' }}
+                />
 
-            {/* Botões de ação */}
-            <div className="d-flex justify-content-end gap-2">
-              <button onClick={() => setConfirmacao({ tipo: 'devolver' })} className="btn btn-outline-primary btn-sm">Devolver</button>
-              <button onClick={() => setConfirmacao({ tipo: 'rejeitar' })} className="btn btn-danger btn-sm">Rejeitar</button>
-              <button onClick={() => setConfirmacao({ tipo: 'validar' })} className="btn btn-success btn-sm">Validar</button>
-            </div>
+                {/* Botões de ação */}
+                <div className="d-flex justify-content-end gap-2">
+                  <button onClick={() => setConfirmacao({ tipo: 'devolver' })} className="btn btn-outline-primary btn-sm">Devolver</button>
+                  <button onClick={() => setConfirmacao({ tipo: 'rejeitar' })} className="btn btn-danger btn-sm">Rejeitar</button>
+                  <button onClick={() => setConfirmacao({ tipo: 'validar' })} className="btn btn-success btn-sm">Validar</button>
+                </div>
+              </>
+            ) : (
+              // Candidatura já decidida (Aprovada/Rejeitada) — só consulta, sem ações
+              <div className="d-flex justify-content-end">
+                <button onClick={fecharDetalhe} className="btn btn-light btn-sm">Fechar</button>
+              </div>
+            )}
           </div>
         </Overlay>
       )}
 
       {confirmacao && (
         <Overlay onClose={() => setConfirmacao(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 420, position: 'relative' }}>
-            <button onClick={() => setConfirmacao(null)} style={fecharBtn}>×</button>
+          <div className="modal-box" style={{ maxWidth: 420 }}>
+            <button onClick={() => setConfirmacao(null)} className="modal-close-btn">×</button>
             <h3 style={{ fontWeight: 700, fontSize: 17, margin: '0 0 8px' }}>Tem a certeza?</h3>
             <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 22px' }}>
               {confirmacao.tipo === 'validar'  && `Esta ação não pode ser revertida. A candidatura ${selecionada?.numCandidatura} será aceite e será encaminhada para o consultor.`}
@@ -394,10 +399,7 @@ export default function Validacoes() {
 // ── Componente overlay reutilizável ──
 function Overlay({ children, onClose }) {
   return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998 }}
-    >
+    <div className="modal-overlay" onClick={onClose}>
       <div onClick={e => e.stopPropagation()}>{children}</div>
     </div>
   )
@@ -406,7 +408,6 @@ function Overlay({ children, onClose }) {
 // ── Estilos reutilizados ──
 const infoBox = { background: '#f9fafb', borderRadius: 8, padding: '10px 12px' }
 const subTitulo = { fontSize: 12, fontWeight: 600, color: '#374151', margin: '0 0 8px' }
-const fecharBtn = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
 
 const corEstado = {
   'Aprovada':           { bg: '#dcfce7', color: '#16a34a' },

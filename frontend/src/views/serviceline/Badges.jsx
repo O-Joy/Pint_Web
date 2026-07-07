@@ -1,6 +1,3 @@
-// src/views/serviceline/Badges.jsx
-// Design baseado no Figma — cards clean com imagem, paginação, filtros, especiais e histórico
-
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
@@ -10,6 +7,7 @@ import { FaBolt } from 'react-icons/fa'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { desenharLogoSoftinsa } from '../../utils/pdfLogo'
 import CardBadge from '../../components/CardBadge'
 
 const POR_PAGINA = 8
@@ -77,14 +75,18 @@ export default function Badges() {
   function fecharModal() { setSelecionado(null); setRequisitos([]); setAberto(null); setCertificadoMarcado(false) }
 
   // Gera um certificado genérico do badge em PDF (pré-visualização — o certificado real é emitido quando o badge é atribuído)
-  function gerarCertificado(badge) {
+  async function gerarCertificado(badge) {
     const doc = new jsPDF({ orientation: 'landscape' })
     const largura = doc.internal.pageSize.getWidth()
     doc.setFillColor(57, 99, 156)
     doc.rect(0, 0, largura, 12, 'F')
+    // logótipo centrado, numa chapa branca para se destacar da barra azul
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(largura / 2 - 24, 18, 48, 14, 2, 2, 'F')
+    await desenharLogoSoftinsa(doc, { x: largura / 2 - 20, y: 21, altura: 8, comLinha: false })
     doc.setFontSize(22)
     doc.setTextColor(26, 26, 46)
-    doc.text('Certificado de Badge', largura / 2, 45, { align: 'center' })
+    doc.text('Certificado de Badge', largura / 2, 48, { align: 'center' })
     doc.setFontSize(16)
     doc.text(badge.nome, largura / 2, 62, { align: 'center' })
     doc.setFontSize(11)
@@ -136,12 +138,13 @@ export default function Badges() {
     XLSX.writeFile(wb, 'badges_sl.xlsx')
   }
 
-  function exportarPDF() {
+  async function exportarPDF() {
     const doc = new jsPDF()
+    const y = await desenharLogoSoftinsa(doc)
     doc.setFontSize(14)
-    doc.text('Badges - Service Line', 14, 16)
+    doc.text('Badges - Service Line', 14, y)
     autoTable(doc, {
-      startY: 22,
+      startY: y + 8,
       head: [['Tipo', 'Nome', 'Nível', 'Service Line', 'Pontos']],
       body: [
         ...regularesFiltrados.map(b => ['Regular', b.nome, b.nomeNivel, b.nomeServiceLine ?? '-', b.pontos ?? 0]),
@@ -291,8 +294,8 @@ export default function Badges() {
       {/* ════════ MODAL INFORMAÇÕES DO BADGE ════════ */}
       {selecionado && (
         <Overlay onClose={fecharModal}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: 500, maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={fecharModal} style={fecharBtn}>×</button>
+          <div className="modal-box" style={{ maxWidth: 500 }}>
+            <button onClick={fecharModal} className="modal-close-btn">×</button>
 
             {/* Cabeçalho: ícone + nome + tag de nível/especial */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
@@ -406,11 +409,11 @@ export default function Badges() {
 
 function Overlay({ children, onClose }) {
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998 }}>
+    <div className="modal-overlay" onClick={onClose}>
       <div onClick={e => e.stopPropagation()}>{children}</div>
     </div>
   )
 }
 
-const fecharBtn  = { position: 'absolute', top: 16, right: 18, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9ca3af', lineHeight: 1 }
+
 const btnPag     = { display: 'flex', alignItems: 'center', gap: 4, background: '#fff', border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, color: '#374151', cursor: 'pointer', boxShadow: '0 2px 12px rgba(237,237,237,1)' }

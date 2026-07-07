@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { FiSliders, FiX, FiBookmark } from 'react-icons/fi'
+import { FiX, FiCheck, FiCircle } from 'react-icons/fi'
 import { getPerfil } from '../utils/auth'
 
 const ROTA_NOTIFICACOES_POR_PERFIL = {
@@ -63,16 +63,24 @@ export default function NotificacoesDropdown({ onClose }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderBottom: '1px solid #f0f0f0' }}>
         <h4 style={{ color: '#39639C', fontWeight: 700, fontSize: 16, margin: 0 }}>Centro De Notificações</h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <FiSliders
-            role="button"
-            title={apenasNaoLidas ? 'Mostrar todas' : 'Mostrar só não lidas'}
-            onClick={() => setApenasNaoLidas(!apenasNaoLidas)}
-            color={apenasNaoLidas ? '#39639C' : '#9ca3af'}
-            style={{ cursor: 'pointer' }}
-          />
-          <FiX role="button" onClick={onClose} color="#9ca3af" style={{ cursor: 'pointer' }} />
-        </div>
+        <FiX role="button" onClick={onClose} color="#9ca3af" style={{ cursor: 'pointer' }} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 4, background: '#f3f4f6', borderRadius: 8, padding: 3, margin: '12px 18px' }}>
+        {[{ id: false, label: 'Todas' }, { id: true, label: 'Não Lidas' }].map(op => (
+          <button
+            key={String(op.id)}
+            onClick={() => setApenasNaoLidas(op.id)}
+            style={{
+              flex: 1, border: 'none', borderRadius: 6, padding: '6px 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+              background: apenasNaoLidas === op.id ? '#fff' : 'transparent',
+              color: apenasNaoLidas === op.id ? '#39639C' : '#9ca3af',
+              boxShadow: apenasNaoLidas === op.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+            }}
+          >
+            {op.label}
+          </button>
+        ))}
       </div>
 
       <div style={{ maxHeight: 420, overflowY: 'auto' }}>
@@ -92,13 +100,23 @@ export default function NotificacoesDropdown({ onClose }) {
               {n.lida ? 'Vista' : 'Nova'}
             </span>
 
-            <FiBookmark
-              role="button"
-              title={n.lida ? 'Marcar como não lida' : 'Marcar como lida'}
-              onClick={() => toggleLida(n)}
-              color="#9ca3af"
-              style={{ cursor: 'pointer', flexShrink: 0, marginTop: 3 }}
-            />
+            {n.lida ? (
+              <FiCircle
+                role="button"
+                title="Marcar como não lida"
+                onClick={() => toggleLida(n)}
+                color="#9ca3af"
+                style={{ cursor: 'pointer', flexShrink: 0, marginTop: 3 }}
+              />
+            ) : (
+              <FiCheck
+                role="button"
+                title="Marcar como lida"
+                onClick={() => toggleLida(n)}
+                color="#39639C"
+                style={{ cursor: 'pointer', flexShrink: 0, marginTop: 3 }}
+              />
+            )}
 
             <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#e2e8f0', flexShrink: 0, overflow: 'hidden' }}>
               {n.remetenteFoto && (

@@ -1,6 +1,3 @@
-// src/views/serviceline/Relatorios.jsx
-// Página de Relatórios do Service Line Leader — KPIs, gráficos e exportação de dados.
-
 import { useState, useEffect, useCallback } from 'react'
 import LayoutSL from './components/LayoutSL'
 import api from '../../services/api'
@@ -10,6 +7,7 @@ import { MdMilitaryTech, MdPerson, MdStars, MdAccessTime } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { desenharLogoSoftinsa } from '../../utils/pdfLogo'
 import { Line, Pie, Doughnut, Bar } from 'react-chartjs-2'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -69,7 +67,7 @@ export default function Relatorios() {
 
   // ── Exportação genérica de um endpoint de dados (Excel/PDF) ──
   function exportarDados(endpoint, nomeFicheiro, colunas, getCelulas, formato) {
-    api.get(endpoint).then(res => {
+    api.get(endpoint).then(async res => {
       const dados = Array.isArray(res.data) ? res.data : []
       if (formato === 'excel') {
         const linhas = dados.map(d => Object.fromEntries(colunas.map((c, i) => [c, getCelulas(d)[i]])))
@@ -79,10 +77,11 @@ export default function Relatorios() {
         XLSX.writeFile(wb, `${nomeFicheiro}.xlsx`)
       } else {
         const doc = new jsPDF()
+        const y = await desenharLogoSoftinsa(doc)
         doc.setFontSize(14)
-        doc.text(nomeFicheiro.replace(/_/g, ' '), 14, 16)
+        doc.text(nomeFicheiro.replace(/_/g, ' '), 14, y)
         autoTable(doc, {
-          startY: 22,
+          startY: y + 6,
           head: [colunas],
           body: dados.map(d => getCelulas(d)),
           headStyles: { fillColor: [57, 99, 156] },
@@ -117,7 +116,7 @@ export default function Relatorios() {
   }
 
   // ── Exportar Relatório Anterior — snapshot em PDF do mês passado ──
-  function exportarRelatorioAnterior() {
+  async function exportarRelatorioAnterior() {
     const hoje = new Date()
     const inicioMesAnt = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
     const fimMesAnt = new Date(hoje.getFullYear(), hoje.getMonth(), 0)
@@ -125,15 +124,16 @@ export default function Relatorios() {
       dataInicio: inicioMesAnt.toISOString().slice(0, 10),
       dataFim: fimMesAnt.toISOString().slice(0, 10),
     })
-    api.get(`/sl/relatorios/candidaturas?${params}`).then(res => {
+    api.get(`/sl/relatorios/candidaturas?${params}`).then(async res => {
       const dados = Array.isArray(res.data) ? res.data : []
       const doc = new jsPDF()
-      doc.setFontSize(16)
-      doc.text('Relatório do Mês Anterior', 14, 15)
+      const y = await desenharLogoSoftinsa(doc)
+      doc.setFontSize(14)
+      doc.text('Relatório do Mês Anterior', 14, y)
       doc.setFontSize(10)
-      doc.text(`${inicioMesAnt.toLocaleDateString('pt-PT')} — ${fimMesAnt.toLocaleDateString('pt-PT')}`, 14, 22)
+      doc.text(`${inicioMesAnt.toLocaleDateString('pt-PT')} — ${fimMesAnt.toLocaleDateString('pt-PT')}`, 14, y + 6)
       autoTable(doc, {
-        startY: 30,
+        startY: y + 12,
         head: [['Consultor', 'Badge', 'Nível', 'Área', 'Estado', 'Data']],
         body: dados.map(d => [d.nomeConsultor, d.nomeBadge, d.nomeNivel, d.nomeArea, d.nomeEstado, new Date(d.dataCriacao).toLocaleDateString('pt-PT')]),
         headStyles: { fillColor: [57, 99, 156] },
@@ -144,25 +144,26 @@ export default function Relatorios() {
   }
 
   // ── "Gerar Relatório" por gráfico — exporta os dados subjacentes em PDF ──
-  function gerarRelatorioGrafico() {
+  async function gerarRelatorioGrafico() {
     const doc = new jsPDF()
+    const y = await desenharLogoSoftinsa(doc)
     doc.setFontSize(14)
     if (grafico === 'evolucao') {
-      doc.text('Evolução Mensal de Badges', 14, 16)
-      autoTable(doc, { startY: 22, head: [['Mês', 'Badges Atribuídos']], body: evolucao.map(e => [e.mes, e.total]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
+      doc.text('Evolução Mensal de Badges', 14, y)
+      autoTable(doc, { startY: y + 6, head: [['Mês', 'Badges Atribuídos']], body: evolucao.map(e => [e.mes, e.total]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
       doc.save('evolucao_mensal.pdf')
     } else if (grafico === 'area') {
-      doc.text('Badges por Área', 14, 16)
+      doc.text('Badges por Área', 14, y)
       autoTable(doc, {
-        startY: 22,
+        startY: y + 6,
         head: [['Área', porArea.labelMesAnterior, porArea.labelMesAtual]],
         body: porArea.areas.map(a => [a.nome, a.mesAnterior, a.mesAtual]),
         headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 },
       })
       doc.save('badges_por_area.pdf')
     } else {
-      doc.text('Badges por Nível e Cumprimento de SLA', 14, 16)
-      autoTable(doc, { startY: 22, head: [['Nível', 'Badges', '%']], body: porNivel.map(n => [n.nome, n.count, `${n.percentagem}%`]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
+      doc.text('Badges por Nível e Cumprimento de SLA', 14, y)
+      autoTable(doc, { startY: y + 6, head: [['Nível', 'Badges', '%']], body: porNivel.map(n => [n.nome, n.count, `${n.percentagem}%`]), headStyles: { fillColor: [57, 99, 156] }, styles: { fontSize: 9 } })
       doc.text(`Cumprimento de SLA: ${sla.percentagem}%`, 14, doc.lastAutoTable.finalY + 10)
       doc.save('nivel_sla.pdf')
     }
@@ -414,12 +415,9 @@ export default function Relatorios() {
 
         {/* ── Modal: escolher o que exportar em "Validações" ── */}
         {modalExportarValidacoes && (
-          <div
-            onClick={() => setModalExportarValidacoes(null)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          >
-            <div onClick={e => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 380 }}>
-              <div className="card-body">
+          <div className="modal-overlay" onClick={() => setModalExportarValidacoes(null)}>
+            <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
+              <button onClick={() => setModalExportarValidacoes(null)} aria-label="Fechar" className="modal-close-btn">×</button>
                 <h5 className="fw-bold text-primary mb-1" style={{ fontSize: 16 }}>O que queres exportar?</h5>
                 <p className="text-secondary small mb-3">Escolhe que validações incluir no ficheiro.</p>
                 <div className="d-flex flex-column gap-2">
@@ -451,7 +449,6 @@ export default function Relatorios() {
                     Ambas
                   </button>
                 </div>
-              </div>
             </div>
           </div>
         )}

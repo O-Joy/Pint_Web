@@ -9,6 +9,7 @@ import { MdMilitaryTech, MdPerson } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { desenharLogoSoftinsa } from '../../utils/pdfLogo'
 
 const formatarData = (data) => {
   if (!data) return '-'
@@ -67,12 +68,13 @@ export default function Consultores() {
     XLSX.writeFile(wb, 'consultores.xlsx')
   }
 
-  const exportarPDF = () => {
+  const exportarPDF = async () => {
     const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('Consultores - Service Line', 14, 15)
+    const y = await desenharLogoSoftinsa(doc)
+    doc.setFontSize(14)
+    doc.text('Consultores - Service Line', 14, y)
     autoTable(doc, {
-      startY: 25,
+      startY: y + 8,
       head: [['#', 'Nome', 'Área', 'Service Line', 'Badges Obtidos', 'Em Processo', 'Pontos', 'Últ. Atividade']],
       body: filtrados.map(c => [
         c.posicao, c.nome, c.nomeArea || '-', c.nomeServiceLine || '-',

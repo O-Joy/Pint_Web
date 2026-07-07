@@ -8,6 +8,7 @@ import { MdInsertChartOutlined } from 'react-icons/md'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { desenharLogoSoftinsa } from '../../utils/pdfLogo'
 import { Line } from 'react-chartjs-2'
 import { 
   Chart as ChartJS, 
@@ -107,12 +108,13 @@ export default function Gamification() {
     XLSX.writeFile(wb, 'gamification_ranking.xlsx')
   }
 
-  const exportarPDF = () => {
+  const exportarPDF = async () => {
     const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('Gamification - Ranking Service Line', 14, 15)
+    const y = await desenharLogoSoftinsa(doc)
+    doc.setFontSize(14)
+    doc.text('Gamification - Ranking Service Line', 14, y)
     autoTable(doc, {
-      startY: 25,
+      startY: y + 6,
       head: [['Posição', 'Consultor', 'Pontos', 'Evolução']],
       body: rankingFiltrado.map(c => [c.posicao, c.nome, c.totalPontos, c.evolucao]),
       styles: { fontSize: 10 },
