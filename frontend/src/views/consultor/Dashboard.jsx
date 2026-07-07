@@ -9,6 +9,7 @@ import { getUtilizador } from '../../utils/auth'
 import { LuTarget } from 'react-icons/lu'
 import { FaClipboardList, FaMedal, FaStar, FaAward } from 'react-icons/fa'
 
+//regista o que irá esta no donut: arco, tip ao passar o rato e legenda
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 // vai buscar a foto

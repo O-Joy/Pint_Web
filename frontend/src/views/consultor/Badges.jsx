@@ -189,6 +189,7 @@ export default function BadgesConsultor() {
       formData.append('ficheiro', ficheiro)
       await api.post(`/candidaturas/${numCandidatura}/evidencias`, formData)
 
+//recarregar os detalhes para refletir evidência recém-enviada
       const detalhes = await api.get(`/candidaturas/${numCandidatura}/detalhes`)
       setCandidatura({
         numCandidatura,
