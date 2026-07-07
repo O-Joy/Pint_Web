@@ -14,6 +14,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicHome from './views/public/Home'
 import BadgeVerify from './views/public/BadgeVerify'
 
+
 // Páginas de autenticação (qualquer utilizador)
 import Login from './views/auth/Login'
 import RecuperarPassword from './views/auth/RecuperarPassword'
@@ -72,6 +73,8 @@ function App() {
         <Route path="/verificar-codigo" element={<VerificarCodigo />} />
         <Route path="/redefinir-password" element={<RedefinirPassword />} />
         <Route path="/escolha-area" element={<EscolhaArea />} />
+        {/*<Route path="/explorar" element={<Catalogo/>} />
+        <Route path="/consultores-certificados" element={<DiretorioConsultores />} ></Route>
 
         {/* Rotas do Consultor — só perfil 'consultor' tem acesso */}
         <Route path="/consultor/dashboard" element={

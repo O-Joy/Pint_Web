@@ -166,7 +166,7 @@ exports.getDiretorio = async (req, res) => {
     }));
     resultado = resultado.filter(Boolean);
     if (req.query.area) resultado = resultado.filter(c => c.nomeArea === req.query.area);
-    return res.json(resultado);xgu
+    return res.json(resultado);
   } catch (err) {
     console.error('[public] getDiretorio:', err.message);
     return res.status(500).json({ error: 'Erro ao carregar diretório.' });

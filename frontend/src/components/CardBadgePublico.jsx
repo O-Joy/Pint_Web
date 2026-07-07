@@ -18,7 +18,7 @@ function coresNivel(nivel) {
 export default function CardBadgePublico({ badge, onInfo }) {
   const cores = coresNivel(badge.nomeNivel)
   return (
-    <div className="card h-100">
+    <div className="card h-100 border-0 shadow-sm hover-card">
       <div className="card-body d-flex flex-column">
         <div className="d-flex justify-content-between align-items-start mb-2">
           <div className="d-flex align-items-center justify-content-center rounded-3"

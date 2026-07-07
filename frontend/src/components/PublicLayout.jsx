@@ -11,7 +11,12 @@ export default function PublicLayout({ children }) {
       {/* ── Cabeçalho ── */}
       <header className="d-flex justify-content-between align-items-center px-4 px-md-5 py-3 bg-white border-bottom">
         <Link to="/" className="fw-bold fs-4 text-decoration-none" style={{ color: '#39639C', letterSpacing: 0.5 }}>
-          SOFT<span style={{ color: '#11a9d6' }}>INSA</span>
+          <img 
+            src="/logo-softinsa.svg" 
+            alt="Softinsa" 
+            height="50" 
+            style={{ objectFit: 'contain' }}
+          />
         </Link>
         <nav className="d-flex align-items-center gap-4">
           <Link to="/explorar" className="text-secondary text-decoration-none small fw-medium d-none d-sm-inline">Explorar</Link>

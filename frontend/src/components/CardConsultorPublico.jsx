@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 export default function CardConsultorPublico({ consultor }) {
   return (
-    <div className="card h-100 text-center">
+    <div className="card h-100 text-center border-0 shadow-sm hover-card">
       <div className="card-body d-flex flex-column align-items-center">
         <div className="rounded-circle overflow-hidden d-flex align-items-center justify-content-center fw-bold mb-2"
           style={{ width: 56, height: 56, background: '#e8f0fb', color: '#39639C', fontSize: 20 }}>

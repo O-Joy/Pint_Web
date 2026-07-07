@@ -1266,3 +1266,12 @@ barras
   white-space: nowrap;
   font-size: 0.85rem;
 }
+
+/* HOME */
+.hover-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(57, 99, 156, 0.12) !important;
+}
