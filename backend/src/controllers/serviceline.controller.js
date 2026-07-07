@@ -996,8 +996,18 @@ exports.exportarValidacoes = async (req, res) => {
     const numsCand = candidaturas.map(c => c.numCandidatura);
     if (numsCand.length === 0) return res.json([]);
 
+    // Filtro opcional: ?estado=aprovadas | rejeitadas (por omissão devolve as duas)
+    const where = { numCandidatura: { [Op.in]: numsCand }, tipoResponsavel: 'sl_leader' };
+    if (req.query.estado === 'aprovadas') {
+      where.idEstadoAtual = ESTADO_APROVADA;
+    } else if (req.query.estado === 'rejeitadas') {
+      where.idEstadoAtual = ESTADO_REJEITADA;
+    } else {
+      where.idEstadoAtual = { [Op.in]: [ESTADO_APROVADA, ESTADO_REJEITADA] };
+    }
+
     const historicos = await HistoricoCandidatura.findAll({
-      where: { numCandidatura: { [Op.in]: numsCand }, tipoResponsavel: 'sl_leader' },
+      where,
       order: [['dataAlteracao', 'DESC']],
     });
 

@@ -39,6 +39,7 @@ export default function Relatorios() {
   const [dataFim, setDataFim] = useState('')
   const [nivel, setNivel] = useState('Todos')
   const [loading, setLoading] = useState(true)
+  const [modalExportarValidacoes, setModalExportarValidacoes] = useState(null) // { formato: 'excel' | 'pdf' }
 
   const carregar = useCallback(() => {
     setLoading(true)
@@ -391,10 +392,16 @@ export default function Relatorios() {
                 <div className="card-body">
                 <p style={{ fontWeight: 700, fontSize: 12, color: '#333', letterSpacing: 0.5, marginBottom: 16 }}>{e.titulo}</p>
                 <div className="d-flex flex-column gap-2">
-                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'excel')} className="btn btn-outline-primary btn-sm">
+                  <button
+                    onClick={() => e === EXPORTACOES.validacoes ? setModalExportarValidacoes({ formato: 'excel' }) : exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'excel')}
+                    className="btn btn-outline-primary btn-sm"
+                  >
                     <FiDownload className="me-1" /> Exportar Excel
                   </button>
-                  <button onClick={() => exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'pdf')} className="btn btn-outline-primary btn-sm">
+                  <button
+                    onClick={() => e === EXPORTACOES.validacoes ? setModalExportarValidacoes({ formato: 'pdf' }) : exportarDados(e.endpoint, e.ficheiro, e.colunas, e.celulas, 'pdf')}
+                    className="btn btn-outline-primary btn-sm"
+                  >
                     <FiDownload className="me-1" /> Exportar PDF
                   </button>
                 </div>
@@ -404,6 +411,50 @@ export default function Relatorios() {
             ))}
           </div>
         </div>
+
+        {/* ── Modal: escolher o que exportar em "Validações" ── */}
+        {modalExportarValidacoes && (
+          <div
+            onClick={() => setModalExportarValidacoes(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          >
+            <div onClick={e => e.stopPropagation()} className="card" style={{ width: '100%', maxWidth: 380 }}>
+              <div className="card-body">
+                <h5 className="fw-bold text-primary mb-1" style={{ fontSize: 16 }}>O que queres exportar?</h5>
+                <p className="text-secondary small mb-3">Escolhe que validações incluir no ficheiro.</p>
+                <div className="d-flex flex-column gap-2">
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => {
+                      exportarDados(`${EXPORTACOES.validacoes.endpoint}?estado=aprovadas`, 'aprovacoes', EXPORTACOES.validacoes.colunas, EXPORTACOES.validacoes.celulas, modalExportarValidacoes.formato)
+                      setModalExportarValidacoes(null)
+                    }}
+                  >
+                    Só Aprovadas
+                  </button>
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => {
+                      exportarDados(`${EXPORTACOES.validacoes.endpoint}?estado=rejeitadas`, 'rejeicoes', EXPORTACOES.validacoes.colunas, EXPORTACOES.validacoes.celulas, modalExportarValidacoes.formato)
+                      setModalExportarValidacoes(null)
+                    }}
+                  >
+                    Só Rejeitadas
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      exportarDados(EXPORTACOES.validacoes.endpoint, 'validacoes', EXPORTACOES.validacoes.colunas, EXPORTACOES.validacoes.celulas, modalExportarValidacoes.formato)
+                      setModalExportarValidacoes(null)
+                    }}
+                  >
+                    Ambas
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Footer />
       </div>

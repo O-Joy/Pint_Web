@@ -1,7 +1,7 @@
 // App.jsx — Ponto de entrada da aplicação React
 // Define todas as rotas da aplicação usando React Router
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './views/serviceline/styles.css'
 import './App.css'
@@ -9,6 +9,10 @@ import Perfil from './components/Perfil'
 import Definicoes from './components/Definicoes'
 
 import ProtectedRoute from './components/ProtectedRoute'
+
+// Páginas públicas (site antes do login)
+import PublicHome from './views/public/Home'
+import BadgeVerify from './views/public/BadgeVerify'
 
 // Páginas de autenticação (qualquer utilizador)
 import Login from './views/auth/Login'
@@ -18,10 +22,6 @@ import RedefinirPassword from './views/auth/RedefinirPassword'
 
 //Admin
 import DashboardAdmin from './views/admin/Dashboard'
-import AdminUtilizadores from './views/admin/Utilizadores'
-import AdminLearningPaths from './views/admin/LearningPaths'
-import AdminBadges from './views/admin/Badges'
-import AdminCandidaturas from './views/admin/Candidaturas'
 
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
@@ -37,10 +37,10 @@ import NotificacoesSL from './views/serviceline/Notificacoes'
 import DashboardTalent from './views/talentmanager/Dashboard'
 import ValidacoesTM from './views/talentmanager/Validacoes'
 import Badges from './views/talentmanager/Badges'
-import ConsultoresTM from './views/talentmanager/Consultores'
-import ConsultorDetalheTM from './views/talentmanager/ConsultorDetalhe'
-import RelatoriosTM from './views/talentmanager/Relatorios'
-import GamificationTM from './views/talentmanager/Gamification'
+//import Consultores from './views/talentmanager/Consultores'
+//import Relatorios from './views/talentmanager/Relatorios'
+//import Notificacoes from './views/talentmanager/Notificacoes'
+//import Gamification from './views/talentmanager/Gamification'
 
 //consultor
 import EscolhaArea from './views/auth/EscolhaArea'
@@ -49,7 +49,6 @@ import BadgesConsultor from './views/consultor/Badges'
 import ObjetivosConsultor from './views/consultor/Objetivos'
 import GamificationConsultor from './views/consultor/Gamification'
 import PedidosConsultor from './views/consultor/Pedidos'
-import NotificacoesConsultor from './views/consultor/Notificacoes'
 
 
 
@@ -57,8 +56,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rota raiz — redireciona para login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Rota raiz — site público (antes do login) */}
+        <Route path="/" element={<PublicHome />} />
+        <Route path="/badges/verify/:token" element={<BadgeVerify />} />
 
         {/* Rotas públicas — não precisam de autenticação */}
         <Route path="/login" element={<Login />} />
@@ -94,12 +94,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/consultor/notificacoes" element={
-          <ProtectedRoute perfisPermitidos={['consultor']}>
-            <NotificacoesConsultor />
-        </ProtectedRoute>
-        } />
-
         {/* Rotas do Talent Manager — só perfil 'talent_manager' tem acesso */}
         <Route path="/talent/dashboard" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
@@ -118,29 +112,27 @@ function App() {
           </ProtectedRoute>
         } />
 
+        {/*
         <Route path="/talent/consultores" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <ConsultoresTM />
+            <Consultores />
           </ProtectedRoute>
         } />
-
-        <Route path="/talent/consultores/:id" element={
-          <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <ConsultorDetalheTM />
-          </ProtectedRoute>
-        } />
-        
         <Route path="/talent/relatorios" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <RelatoriosTM />
+            <Relatorios />
           </ProtectedRoute>
         } />
-
+        <Route path="/talent/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <Notificacoes />
+          </ProtectedRoute>
+        } />
         <Route path="/talent/gamification" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <GamificationTM />
+            <Gamification />
           </ProtectedRoute>
-        } />
+        } />*/}
 
         {/* Rotas do Service Line Leader */}
         <Route path="/serviceline/dashboard" element={
@@ -188,26 +180,6 @@ function App() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute perfisPermitidos={['administrador']}>
             <DashboardAdmin />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/utilizadores" element={
-          <ProtectedRoute perfisPermitidos={['administrador']}>
-            <AdminUtilizadores />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/learning-paths" element={
-          <ProtectedRoute perfisPermitidos={['administrador']}>
-            <AdminLearningPaths />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/badges" element={
-          <ProtectedRoute perfisPermitidos={['administrador']}>
-            <AdminBadges />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/candidaturas" element={
-          <ProtectedRoute perfisPermitidos={['administrador']}>
-            <AdminCandidaturas />
           </ProtectedRoute>
         } />
 
