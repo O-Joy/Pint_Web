@@ -950,7 +950,7 @@ exports.getDetalhesCandidatura = async (req, res) => {
       };
     }));
 
-    const { Evidencia } = require('../model/evidencia');
+    const Evidencia = require('../model/evidencia');
     const evidencias = await Evidencia.findAll({ where: { numCandidatura } });
 
     return res.json({

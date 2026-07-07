@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { IoIosNotifications } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
 import { getPerfil } from '../utils/auth'
+import NotificacoesDropdown from './NotificacoesDropdown';
 
 const ROTA_NOTIFICACOES_POR_PERFIL = {
   consultor: '/consultor/notificacoes',
@@ -14,6 +15,7 @@ const ROTA_NOTIFICACOES_POR_PERFIL = {
 export default function Topbar() {
   const navigate = useNavigate()
   const [pesquisa, setPesquisa] = useState('')
+  const [notificacoesAbertas, setNotificacoesAbertas] = useState(false)
 
   return (
     <>
@@ -71,21 +73,27 @@ export default function Topbar() {
         </div>
 
         {/* ÍCONE DE NOTIFICAÇÕES */}
-        <button 
-          className="topbar-notif-btn" 
-          onClick={() => navigate(ROTA_NOTIFICACOES_POR_PERFIL[getPerfil()] || '/consultor/notificacoes')}
-          style={{
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            color: '#39639C', 
-            display: 'flex',
-            alignItems: 'center',
-            padding: '4px'
-          }}
-        >
-          <IoIosNotifications size={32}/>
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button 
+            className="topbar-notif-btn" 
+            onClick={() => setNotificacoesAbertas(prev => !prev)}
+            style={{
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              color: '#39639C', 
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px'
+            }}
+          >
+            <IoIosNotifications size={32}/>
+          </button>
+
+          {notificacoesAbertas && (
+            <NotificacoesDropdown onClose={() => setNotificacoesAbertas(false)} />
+          )}
+        </div>
       </div>
     </>
   )

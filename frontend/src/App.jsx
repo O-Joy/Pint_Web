@@ -22,6 +22,11 @@ import RedefinirPassword from './views/auth/RedefinirPassword'
 
 //Admin
 import DashboardAdmin from './views/admin/Dashboard'
+import AdminUtilizadores from './views/admin/Utilizadores'
+import AdminLearningPaths from './views/admin/LearningPaths'
+import AdminBadges from './views/admin/Badges'
+import AdminCandidaturas from './views/admin/Candidaturas'
+import AdminNotificacoes from './views/admin/Notificacoes'
 
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
@@ -37,10 +42,11 @@ import NotificacoesSL from './views/serviceline/Notificacoes'
 import DashboardTalent from './views/talentmanager/Dashboard'
 import ValidacoesTM from './views/talentmanager/Validacoes'
 import Badges from './views/talentmanager/Badges'
-//import Consultores from './views/talentmanager/Consultores'
-//import Relatorios from './views/talentmanager/Relatorios'
-//import Notificacoes from './views/talentmanager/Notificacoes'
-//import Gamification from './views/talentmanager/Gamification'
+import ConsultoresTM from './views/talentmanager/Consultores'
+import ConsultorDetalheTM from './views/talentmanager/ConsultorDetalhe'
+import RelatoriosTM from './views/talentmanager/Relatorios'
+import GamificationTM from './views/talentmanager/Gamification'
+import NotificacoesTM from './views/talentmanager/Notificacoes'
 
 //consultor
 import EscolhaArea from './views/auth/EscolhaArea'
@@ -134,6 +140,12 @@ function App() {
           </ProtectedRoute>
         } />*/}
 
+        <Route path="/talent/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['talent_manager']}>
+            <NotificacoesTM />
+          </ProtectedRoute>
+        } />
+
         {/* Rotas do Service Line Leader */}
         <Route path="/serviceline/dashboard" element={
           <ProtectedRoute perfisPermitidos={['sl_leader']}>
@@ -186,6 +198,12 @@ function App() {
         <Route path="/perfil" element={
           <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
             <Perfil />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/notificacoes" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminNotificacoes />
           </ProtectedRoute>
 } />
 

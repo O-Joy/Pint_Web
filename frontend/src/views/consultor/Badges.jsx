@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react'
-import Topbar from '../../components/Topbar'
-import Sidebar, { icons } from '../../components/Sidebar'
+import LayoutConsultor from './components/LayoutConsultor'
 import CardBadge from '../../components/CardBadge'
 import api from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { FiSearch, FiUploadCloud } from 'react-icons/fi'
 import { FaBolt, FaCheckCircle } from 'react-icons/fa'
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
-  { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
-  { label: 'Pedidos', path: '/consultor/pedidos', icon: icons.pedidos },
-  { label: 'Objetivos', path: '/consultor/objetivos', icon: icons.objetivos },
-  { label: 'Gamification', path: '/consultor/gamification', icon: icons.gamification },
-]
 
 const POR_PAGINA = 8
 
@@ -228,20 +219,8 @@ export default function BadgesConsultor() {
   }
 
   return (
-    <div className="pg-layout">
-      <div className="pg-top">
-        <Topbar />
-      </div>
-
-      <div className="container-fluid pg-body">
-        <div className="row h-100">
-          <div className="col-auto d-none d-md-flex p-0">
-            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-          </div>
-
-          <div className="col">
-            <main className="pg-content">
-              <div style={{ padding: '1.5rem', fontFamily: 'Poppins, sans-serif' }}>
+    <LayoutConsultor>
+      <div style={{ padding: '1.5rem', fontFamily: 'Poppins, sans-serif' }}>
 
                 {loading ? (
                   <p style={{ textAlign: 'center', color: '#aaa' }}>A carregar...</p>
@@ -344,10 +323,6 @@ export default function BadgesConsultor() {
                   </>
                 )}
               </div>
-            </main>
-          </div>
-        </div>
-      </div>
 
       {/* Modal de informações */}
       {badgeSelecionado && (
@@ -487,7 +462,7 @@ export default function BadgesConsultor() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutConsultor>
   )
 }
 

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import Topbar from '../../components/Topbar'
-import Sidebar, { icons } from '../../components/Sidebar'
+import LayoutConsultor from './components/LayoutConsultor'
 import AcoesRapidas from '../../components/AcoesRapidas'
 import api from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
@@ -18,15 +17,7 @@ function urlFotoCompleto(urlFoto) {
   return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
 }
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/consultor/dashboard', icon: icons.dashboard },
-  { label: 'Badges', path: '/consultor/badges', icon: icons.badges },
-  { label: 'Pedidos', path: '/consultor/pedidos', icon: icons.pedidos },
-  { label: 'Objetivos', path: '/consultor/objetivos', icon: icons.objetivos },
-  { label: 'Gamification', path: '/consultor/gamification', icon: icons.gamification },
-]
-
-// Cartões de "Ações Rápidas" — o que cada página do menu contém
+// Cartões de Ações Rápidas — o que cada página do menu contém
 const CARDS_ACOES_RAPIDAS = [
   {
     descricao: 'Nesta página está presente',
@@ -83,7 +74,7 @@ export default function DashboardConsultor() {
 
   // Top 3 do ranking geral — para o pódio
   const top3 = ranking.slice(0, 3)
-  // Posições seguintes — para a mini-tabela "Ranking"
+  // Posições seguintes — para a mini-tabela Ranking
   const restoRanking = ranking.slice(3, 6)
   // A posição/pontos do próprio consultor autenticado
   const meuDesempenho = ranking.find(r => r.idUtilizador === utilizador?.id)
@@ -103,23 +94,10 @@ export default function DashboardConsultor() {
   ]
 
   return (
-    <div className="pg-layout">
-      <div className="pg-top">
-        <Topbar />
-      </div>
+    <LayoutConsultor>
+      <div className="dashboard-wrapper">
 
-      <div className="container-fluid pg-body">
-        <div className="row h-100">
-
-          <div className="col-auto d-none d-md-flex p-0">
-            <Sidebar navItems={NAV_ITEMS} perfil="Consultor" />
-          </div>
-
-          <div className="col">
-            <main className="pg-content">
-              <div className="dashboard-wrapper">
-
-                <h2 className="dashboard-titulo">Resumo da minha Atividade</h2>
+        <h2 className="dashboard-titulo">Resumo da minha Atividade</h2>
 
                 {loading ? (
                   <p className="dashboard-vazio">A carregar...</p>
@@ -292,12 +270,7 @@ export default function DashboardConsultor() {
                   </>
                 )}
 
-              </div>
-            </main>
-          </div>
-
-        </div>
       </div>
-    </div>
+    </LayoutConsultor>
   )
 }

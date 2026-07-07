@@ -1,5 +1,7 @@
 const Notificacao = require('../model/notificacao');
 const UtilizadorNotificacao = require('../model/utilizadorNotificacao');
+const Candidatura = require('../model/candidatura');
+const Utilizador = require('../model/utilizador');
  
 // GET /api/notificacoes
 // Devolve todas as notificações do utilizador autenticado
@@ -31,16 +33,34 @@ exports.getNotificacoes = async (req, res) => {
     });
 
     // Devolve os campos esperados pelo Flutter (fromJson do modelo Notificacao)
-    const resultado = notificacoes.map((n) => ({
-      id: n.idNotificacao,
-      tipoNotificacao: n.tipoNotificacao,
-      descricao: n.descricao,
-      data: n.data,
-      lida: lidaMap[n.idNotificacao] ?? false,
-      numCandidatura: n.numCandidatura,
-      idObjetivo: n.idObjetivo,
-      idBadgeUtilizador: n.idBadgeUtilizador,
-      idBadgeEspecial: n.idBadgeEspecial,
+    const resultado = await Promise.all(notificacoes.map(async (n) => {
+      let remetenteNome = null;
+      let remetenteFoto = null;
+
+      if (n.numCandidatura) {
+        const candidatura = await Candidatura.findOne({ where: { numCandidatura: n.numCandidatura } });
+        if (candidatura?.idCandidato) {
+          const utilizador = await Utilizador.findOne({ where: { idUtilizador: candidatura.idCandidato } });
+          if (utilizador) {
+            remetenteNome = utilizador.nomeUtilizador;
+            remetenteFoto = utilizador.urlFoto;
+          }
+        }
+      }
+
+      return {
+        id: n.idNotificacao,
+        tipoNotificacao: n.tipoNotificacao,
+        descricao: n.descricao,
+        data: n.data,
+        lida: lidaMap[n.idNotificacao] ?? false,
+        numCandidatura: n.numCandidatura,
+        idObjetivo: n.idObjetivo,
+        idBadgeUtilizador: n.idBadgeUtilizador,
+        idBadgeEspecial: n.idBadgeEspecial,
+        remetenteNome,
+        remetenteFoto,
+      };
     }));
  
     res.json(resultado);
