@@ -197,6 +197,26 @@ function App() {
             <DashboardAdmin />
           </ProtectedRoute>
         } />
+        <Route path="/admin/utilizadores" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminUtilizadores />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/learning-paths" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminLearningPaths />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/badges" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminBadges />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/candidaturas" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminCandidaturas />
+          </ProtectedRoute>
+        } />
 
         <Route path="/perfil" element={
           <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
@@ -208,7 +228,7 @@ function App() {
           <ProtectedRoute perfisPermitidos={['administrador']}>
             <AdminNotificacoes />
           </ProtectedRoute>
-} />
+        } />
 
         <Route path="/definicoes" element={
           <ProtectedRoute perfisPermitidos={['consultor', 'talent_manager', 'sl_leader', 'administrador']}>
