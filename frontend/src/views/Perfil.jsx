@@ -1,4 +1,3 @@
-
 import { getUtilizador } from '../utils/auth'
 import Sidebar, { icons } from '../components/Sidebar'
 import Topbar from '../components/Topbar'

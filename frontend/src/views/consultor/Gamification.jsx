@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LayoutConsultor from './components/LayoutConsultor'
-import api from '../../services/api'
+import api, { FILES_URL }from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa'
 
 // Foto - URL completo ou como caminho do upload
 function urlFotoCompleto(urlFoto) {
   if (!urlFoto) return null
-  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+  return urlFoto.startsWith('http') ? urlFoto : `${FILES_URL}/${urlFoto}`
 }
 
 function Evolucao({ valor }) {

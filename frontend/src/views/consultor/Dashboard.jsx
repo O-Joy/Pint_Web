@@ -4,7 +4,7 @@ import { Doughnut } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import LayoutConsultor from './components/LayoutConsultor'
 import AcoesRapidas from '../../components/AcoesRapidas'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { LuTarget } from 'react-icons/lu'
 import { FaClipboardList, FaMedal, FaStar, FaAward } from 'react-icons/fa'
@@ -15,7 +15,7 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 // vai buscar a foto
 function urlFotoCompleto(urlFoto) {
   if (!urlFoto) return null
-  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+  return urlFoto.startsWith('http') ? urlFoto : `${FILES_URL}/${urlFoto}`
 }
 
 // Cartões de Ações Rápidas — o que cada página do menu contém
@@ -249,7 +249,7 @@ export default function DashboardConsultor() {
                             <div className="badge-recomendado-card" onClick={() => navigate('/consultor/badges')}>
                               <div className="badge-recomendado-icone">
                                 {b.urlImagem
-                                  ? <img src={`http://localhost:3001/${b.urlImagem}`} alt={b.nome} />
+                                  ? <img src={`${FILES_URL}/${b.urlImagem}`} alt={b.nome} />
                                   : '🏅'}
                               </div>
                               <div className="badge-recomendado-info">

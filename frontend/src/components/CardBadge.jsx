@@ -1,4 +1,4 @@
-
+import { FILES_URL } from '../services/api'
 import { FaBolt } from 'react-icons/fa'
 
 // Match parcial — verifica se o nomeNivel contém a palavra-chave
@@ -27,7 +27,7 @@ export default function CardBadge({ b, especial, onInfo, onRenovar, corIndicador
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {b.urlImagem
-            ? <img src={`http://localhost:3001/${b.urlImagem}`} alt={b.nome} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+            ? <img src={`${FILES_URL}/${b.urlImagem}`} alt={b.nome} style={{ width: 48, height: 48, objectFit: 'contain' }} />
             : <span style={{ fontSize: 26 }}>{especial ? '⭐' : '🏅'}</span>
           }
         </div>

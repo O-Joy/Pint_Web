@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUtilizador, atualizarUtilizadorLocal } from '../utils/auth'
-import api from '../services/api'
+import api, { FILES_URL} from '../services/api'
 import Sidebar, { icons } from './Sidebar'
 import Topbar from './Topbar'
 
@@ -221,7 +221,7 @@ export default function Definicoes() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
                         <div style={{ width: 60, height: 60, borderRadius: '50%', overflow: 'hidden', background: '#e8f0fb', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {form.urlFoto
-                            ? <img src={form.urlFoto.startsWith('http') ? form.urlFoto : `http://localhost:3001/${form.urlFoto}`} alt="Foto de perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ? <img src={form.urlFoto.startsWith('http') ? form.urlFoto : `${FILES_URL}/${form.urlFoto}`} alt="Foto de perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             : <span style={{ color: '#9ca3af', fontSize: 11 }}>Sem foto</span>}
                         </div>
                         <label htmlFor="input-foto-perfil" style={{ cursor: aEnviarFoto ? 'wait' : 'pointer', fontSize: 12.5, fontWeight: 600, color: '#39639C', border: '1px solid #39639C', borderRadius: 20, padding: '6px 14px' }}>

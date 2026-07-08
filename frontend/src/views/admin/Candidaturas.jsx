@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import LayoutAdmin from './components/LayoutAdmin'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import { FiSearch, FiEye, FiEdit2, FiTrash2 } from 'react-icons/fi'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -267,7 +267,7 @@ export default function AdminCandidaturas() {
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 12px' }}>
                     <span style={{ fontSize: 12, fontWeight: 500 }}>Requisito #{e.idRequisito}</span>
                     {e.pathFicheiro && (
-                      <a href={`http://localhost:3001/${e.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#39639C', textDecoration: 'underline' }}>
+                      <a href={`${FILES_URL}${e.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#39639C', textDecoration: 'underline' }}>
                         Ver evidência
                       </a>
                     )}

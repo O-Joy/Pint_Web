@@ -2,6 +2,7 @@
 // Recebe os itens de navegação como prop -> varia de perfil para perfil
 
 import { NavLink, useNavigate } from 'react-router-dom'
+import { FILES_URL } from '../services/api'
 import { getUtilizador, limparSessao } from '../utils/auth'
 import { FaTrophy } from 'react-icons/fa'
 import { FaMedal } from 'react-icons/fa6'
@@ -12,7 +13,7 @@ import { LuTarget } from "react-icons/lu"
 // A foto pode vir como URL completo ou como caminho relativo do upload
 function urlFotoCompleto(urlFoto) {
   if (!urlFoto) return null
-  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+  return urlFoto.startsWith('http') ? urlFoto : `${FILES_URL}/${urlFoto}`
 }
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { useState } from 'react'

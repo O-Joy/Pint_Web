@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Topbar from '../../components/Topbar'
 import Sidebar, { icons } from '../../components/Sidebar'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import { FiSearch, FiUploadCloud } from 'react-icons/fi'
 import { FaCheckCircle } from 'react-icons/fa'
 
@@ -440,7 +440,7 @@ export default function PedidosConsultor() {
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
               <div style={{ width: 70, height: 70, borderRadius: 12, background: '#e8f0fb', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, overflow: 'hidden' }}>
               {candidaturaEditar.urlImagem
-              ? <img src={`http://localhost:3001/${candidaturaEditar.urlImagem}`} alt={candidaturaEditar.nomeBadge} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ? <img src={`${FILES_URL}/${candidaturaEditar.urlImagem}`} alt={candidaturaEditar.nomeBadge} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               : '🏅'}
               </div>
               <div style={{ flex: 1 }}>
@@ -471,7 +471,7 @@ export default function PedidosConsultor() {
                     }}>
                       <div style={{ fontSize: 13 }}>
                         {evidencia ? (
-                          <a href={`http://localhost:3001/${evidencia.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ color: '#39639C' }}>
+                          <a href={`${FILES_URL}/${evidencia.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ color: '#39639C' }}>
                             {evidencia.pathFicheiro.split('/').pop()}
                           </a>
                         ) : (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import LayoutConsultor from './components/LayoutConsultor'
 import CardBadge from '../../components/CardBadge'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import { getUtilizador } from '../../utils/auth'
 import { FiSearch, FiUploadCloud } from 'react-icons/fi'
 import { FaBolt, FaCheckCircle } from 'react-icons/fa'
@@ -333,7 +333,7 @@ export default function BadgesConsultor() {
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 16 }}>
               <div style={{ width: 70, height: 70, borderRadius: 12, background: '#e8f0fb', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, overflow: 'hidden' }}>
               {badgeSelecionado.urlImagem
-              ? <img src={`http://localhost:3001/${badgeSelecionado.urlImagem}`} alt={badgeSelecionado.nome} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ? <img src={`${FILES_URL}/${badgeSelecionado.urlImagem}`} alt={badgeSelecionado.nome} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               : (badgeSelecionado.especial ? '⭐' : '🏅')}
               </div>
               <div style={{ flex: 1 }}>
@@ -403,7 +403,7 @@ export default function BadgesConsultor() {
                         }}>
                           <div style={{ fontSize: 13 }}>
                             {evidencia ? (
-                              <a href={`http://localhost:3001/${evidencia.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ color: '#39639C' }}>
+                              <a href={`${FILES_URL}/${evidencia.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ color: '#39639C' }}>
                                 {evidencia.pathFicheiro.split('/').pop()}
                               </a>
                             ) : (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import Footer from '../../components/Footer'
 import { FiSearch, FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiFlag } from 'react-icons/fi'
 import { FaBolt } from 'react-icons/fa'
@@ -301,7 +301,7 @@ export default function Badges() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
               <div style={{ width: 56, height: 56, borderRadius: 10, background: '#eef3fa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {selecionado.urlImagem
-                  ? <img src={`http://localhost:3001/${selecionado.urlImagem}`} alt={selecionado.nome} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  ? <img src={`${FILES_URL}/${selecionado.urlImagem}`} alt={selecionado.nome} style={{ width: 48, height: 48, objectFit: 'contain' }} />
                   : <span style={{ fontSize: 26 }}>{selecionado.especial ? '⭐' : '🏅'}</span>}
               </div>
               <div style={{ flex: 1 }}>

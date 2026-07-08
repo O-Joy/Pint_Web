@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import LayoutSL from './components/LayoutSL'
-import api from '../../services/api'
+import api, { FILES_URL } from '../../services/api'
 import Footer from '../../components/Footer'
 import { FiSearch, FiEye } from 'react-icons/fi'
 import { FaReply, FaPaperPlane } from 'react-icons/fa'
@@ -322,7 +322,7 @@ export default function Validacoes() {
                 {evidencias.map((e, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 12px' }}>
                     <span style={{ fontSize: 12, fontWeight: 500 }}>{e.nomeRequisito}</span>
-                    <a href={`http://localhost:3001/${e.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#39639C', textDecoration: 'underline' }}>
+                    <a href={`${FILES_URL}/${e.pathFicheiro}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#39639C', textDecoration: 'underline' }}>
                       Ver evidência
                     </a>
                   </div>

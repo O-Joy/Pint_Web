@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../services/api'
+import api, { FILES_URL } from '../services/api'
 import { FiX, FiCheck, FiCircle } from 'react-icons/fi'
 import { getPerfil } from '../utils/auth'
 
@@ -13,7 +13,7 @@ const ROTA_NOTIFICACOES_POR_PERFIL = {
 
 function urlFotoCompleto(urlFoto) {
   if (!urlFoto) return null
-  return urlFoto.startsWith('http') ? urlFoto : `http://localhost:3001/${urlFoto}`
+  return urlFoto.startsWith('http') ? urlFoto : `${FILES_URL}/{urlFoto}`
 }
 
 function tempoOuData(data) {

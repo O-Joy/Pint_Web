@@ -5,7 +5,12 @@
 import axios from 'axios'
 
 // URL base do backend — todos os pedidos começam aqui
-const BASE_URL = 'http://localhost:3001/api'
+//Em produção, define a variável de ambiente VITE_API_URL
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
+//URL base para ficheiros estáticos (fotos de perfil, imagens de badges...)
+//É o mesmo servidor do backend, mas sem o "/api" no fim
+export const FILES_URL = BASE_URL.replace(/\/api\/?$/, '')
 
 // Instância do axios configurada com a URL base
 const api = axios.create({
