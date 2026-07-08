@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { label: 'Learning Paths', path: '/admin/learning-paths', icon: icons.relatorios },
   { label: 'Badges', path: '/admin/badges', icon: icons.badges },
   { label: 'Candidaturas', path: '/admin/candidaturas', icon: icons.pedidos },
+  { label: 'Relatórios', path: '/admin/relatorios', icon: icons.relatorios },
 ]
 
 export default function LayoutAdmin({ children }) {

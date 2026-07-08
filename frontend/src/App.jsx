@@ -28,6 +28,7 @@ import AdminLearningPaths from './views/admin/LearningPaths'
 import AdminBadges from './views/admin/Badges'
 import AdminCandidaturas from './views/admin/Candidaturas'
 import AdminNotificacoes from './views/admin/Notificacoes'
+import AdminRelatorios from './views/admin/Relatorios'
 
 //SLL
 import DashboardServiceLine from './views/serviceline/Dashboard'
@@ -227,6 +228,12 @@ function App() {
         <Route path="/admin/notificacoes" element={
           <ProtectedRoute perfisPermitidos={['administrador']}>
             <AdminNotificacoes />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin/relatorios" element={
+          <ProtectedRoute perfisPermitidos={['administrador']}>
+            <AdminRelatorios />
           </ProtectedRoute>
         } />
 
