@@ -121,28 +121,22 @@ function App() {
             <ValidacoesTM />
           </ProtectedRoute>
         } />
-
-        {/*
         <Route path="/talent/consultores" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Consultores />
+            <ConsultoresTM />
           </ProtectedRoute>
         } />
         <Route path="/talent/relatorios" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Relatorios />
+            <RelatoriosTM />
           </ProtectedRoute>
         } />
-        <Route path="/talent/notificacoes" element={
-          <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Notificacoes />
-          </ProtectedRoute>
-        } />
+        
         <Route path="/talent/gamification" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
-            <Gamification />
+            <GamificationTM />
           </ProtectedRoute>
-        } />*/}
+        } />
 
         <Route path="/talent/notificacoes" element={
           <ProtectedRoute perfisPermitidos={['talent_manager']}>
